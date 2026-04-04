@@ -3,13 +3,11 @@
 # Script de verificacao de dependencias do host
 # Verifica se todas as bibliotecas necessarias para rodar openmsx estao presentes
 
-set -euo pipefail
-
 echo "[DEPS CHECK] Validando dependencias do host..."
 echo ""
 
 # Lista de bibliotecas criticas necessarias para openmsx
-declare -a REQUIRED_LIBS=(
+REQUIRED_LIBS=(
   "libSDL2-2.0.so.0"
   "libSDL2_ttf-2.0.so.0"
   "libSDL2_image-2.0.so.0"
@@ -18,37 +16,39 @@ declare -a REQUIRED_LIBS=(
   "libasound.so.2"
   "libGL.so.1"
   "libEGL.so.1"
+  "libGLEW.so.2.2"
   "libxml2.so.2"
   "libz.so.1"
 )
 
 missing_count=0
 present_count=0
+total_count=${#REQUIRED_LIBS[@]}
 
 # Verifica cada biblioteca no host
 for lib in "${REQUIRED_LIBS[@]}"; do
-  if ls /lib/x86_64-linux-gnu/"$lib"* 2>/dev/null | head -1 &>/dev/null; then
+  if ls /lib/x86_64-linux-gnu/"$lib"* >/dev/null 2>&1; then
     echo "[OK] $lib"
-    ((present_count++))
+    present_count=$((present_count + 1))
   else
     echo "[MISSING] $lib"
-    ((missing_count++))
+    missing_count=$((missing_count + 1))
   fi
 done
 
 echo ""
 echo "========================================="
-echo "Presente: $present_count / ${#REQUIRED_LIBS[@]}"
-echo "Faltando: $missing_count / ${#REQUIRED_LIBS[@]}"
+echo "Presente: $present_count / $total_count"
+echo "Faltando: $missing_count / $total_count"
 echo "========================================="
 
-if [[ $missing_count -gt 0 ]]; then
+if [ "$missing_count" -gt 0 ]; then
   echo ""
   echo "SOLUCAO: Instalar as dependencias faltando"
   echo "  ./src/install-host-deps.sh"
   echo ""
   echo "Ou manualmente:"
-  echo "  sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0 libsdl2-image-2.0-0"
+  echo "  sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0 libsdl2-image-2.0-0 libglew2.2"
   echo ""
   exit 1
 else

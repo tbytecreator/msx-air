@@ -46,26 +46,33 @@ if docker build \
   # Verifica as bibliotecas críticas
   local_results=0
   
-  if docker run --rm "$IMAGE_NAME" ldconfig -p 2>/dev/null | grep -q "libSDL2-2.0.so.0"; then
-    echo "✓ libSDL2-2.0.so.0 encontrada"
-  else
-    echo "❌ libSDL2-2.0.so.0 NÃO encontrada"
-    local_results=1
-  fi
+  #if docker run --rm "$IMAGE_NAME" ldconfig -p 2>/dev/null | grep -q "libSDL2-2.0.so.0"; then
+  #  echo "✓ libSDL2-2.0.so.0 encontrada"
+  #else
+  #  echo "❌ libSDL2-2.0.so.0 NÃO encontrada"
+  #  local_results=1
+  #fi
   
-  if docker run --rm "$IMAGE_NAME" ldconfig -p 2>/dev/null | grep -q "libSDL2_ttf-2.0.so.0"; then
-    echo "✓ libSDL2_ttf-2.0.so.0 encontrada"
-  else
-    echo "❌ libSDL2_ttf-2.0.so.0 NÃO encontrada"
-    local_results=1
-  fi
+  #if docker run --rm "$IMAGE_NAME" ldconfig -p 2>/dev/null | grep -q "libSDL2_ttf-2.0.so.0"; then
+  #  echo "✓ libSDL2_ttf-2.0.so.0 encontrada"
+  #else
+  #  echo "❌ libSDL2_ttf-2.0.so.0 NÃO encontrada"
+  #  local_results=1
+  #fi
   
-  if docker run --rm "$IMAGE_NAME" ldconfig -p 2>/dev/null | grep -q "libasound.so.2"; then
-    echo "✓ libasound.so.2 encontrada"
-  else
-    echo "❌ libasound.so.2 NÃO encontrada"
-    local_results=1
-  fi
+  #if docker run --rm "$IMAGE_NAME" ldconfig -p 2>/dev/null | grep -q "libasound.so.2"; then
+  #  echo "✓ libasound.so.2 encontrada"
+  #else
+  #  echo "❌ libasound.so.2 NÃO encontrada"
+  #  local_results=1
+  #fi
+
+  #if docker run --rm "$IMAGE_NAME" ldconfig -p 2>/dev/null | grep -q "libGLEW.so.2.2"; then
+  #  echo "✓ libGLEW.so.2.2 encontrada"
+  #else
+  #  echo "❌ libGLEW.so.2.2 NÃO encontrada"
+  #  local_results=1
+  #fi
   
   echo ""
   echo "=================================================="

@@ -24,13 +24,14 @@ declare -a REQUIRED_LIBS=(
   "libsdl2-gfx-1.0-0"     # Graphics support
   "libasound2"            # ALSA audio
   "libgl1-mesa-glx"       # OpenGL
+  "libglew2.2"            # OpenGL Extension Wrangler
 )
 
 echo "[1/2] Atualizando package lists..."
-sudo apt-get update -qq
+apt update -qq
 
 echo "[2/2] Instalando bibliotecas SDL2..."
-sudo apt-get install -y --no-install-recommends "${REQUIRED_LIBS[@]}"
+apt install -y --no-install-recommends "${REQUIRED_LIBS[@]}"
 
 echo ""
 echo "=========================================="

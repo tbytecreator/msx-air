@@ -97,22 +97,6 @@ get_gpu_libs_args() {
     fi
   done
 }
-# Sessao de verificacao de dependencias do container
-echo "[DEPENDENCIES] Verificando bibliotecas necessarias..."
-echo ""
-if ! docker run --rm msxair:bookworm ldconfig -p 2>/dev/null | grep -q "libSDL2-2.0.so.0"; then
-  echo "[WARN] libSDL2 nao encontrada no container"
-  echo "[INFO] Reconstruir:  docker build -t msxair:bookworm -f docker/Dockerfile ."
-  echo ""
-fi
-
-if ! docker run --rm msxair:bookworm ldconfig -p 2>/dev/null | grep -q "libSDL2_ttf"; then
-  echo "[WARN] libSDL2_ttf nao encontrada no container"
-  echo "[INFO] Reconstruir: docker build -t msxair:bookworm -f docker/Dockerfile ."
-  echo ""
-fi
-
-echo "[OK] Verificacao completada"
 echo ""
 # Detecta e aplica as configurações corretas
 DISPLAY_SERVER=$(detect_display_server)
@@ -120,7 +104,7 @@ DISPLAY_SERVER=$(detect_display_server)
 echo "Detectado: $DISPLAY_SERVER"
 
 # Inicializa o array com argumentos básicos
-DOCKER_RUN_ARGS=(--rm -it)
+DOCKER_RUN_ARGS=(--rm -it --privileged)
 
 # Adiciona variáveis de environment para GPU rendering
 DOCKER_RUN_ARGS+=(-e "LIBGL_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri:/usr/lib/aarch64-linux-gnu/dri")

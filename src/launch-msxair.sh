@@ -19,8 +19,8 @@ if ! command -v openmsx >/dev/null 2>&1; then
     exit 1
   fi
   
-  if ! flatpak list --app 2>/dev/null | grep -q "org.openmsx.openMSX"; then
-    echo "[ERROR] openMSX nao esta instalado via Flatpak. Execute: ./install-openmsx.sh" >&2
+  if ! flatpak info org.openmsx.openMSX >/dev/null 2>&1; then
+    echo "[ERROR] openMSX nao esta instalado via Flatpak. Execute: ./openmsx-install.sh" >&2
     exit 1
   fi
   
@@ -100,4 +100,5 @@ if [[ -n "${AUTOSTART_DSK}" ]]; then
 fi
 
 echo "[INFO] Iniciando openMSX em tela cheia com maquina ${MACHINE}"
+echo "[INFO] Iniciando ${OPENMSX_CMD} ${args[*]}"
 exec ${OPENMSX_CMD} "${args[@]}"

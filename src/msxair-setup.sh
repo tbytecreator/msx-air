@@ -19,11 +19,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Lista de scripts a executar em ordem
 declare -a SETUP_SCRIPTS=(
-  "install-host-deps.sh"
   "openmsx-install.sh"
   "nooverview-install.sh"
   "copy-systemroms.sh"
   "setup-autostart.sh"
+  "launch-msxair.sh"
 )
 
 log "======================================"
