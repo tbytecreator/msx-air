@@ -35,15 +35,7 @@ RUN apt-get update --fix-missing \
         zlib1g \
         libpng16-16 \
         libglew2.2 \
-        flatpak \
     && ldconfig
-
-# Inicializa flatpak e instala o repositório flathub
-RUN mkdir -p /var/lib/flatpak \
-    && flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-
-# Instala OpenMSX via flatpak
-RUN flatpak install -y --noninteractive flathub org.openmsx.openMSX
 
 # Executa ldconfig final e limpa cache de apt
 RUN ldconfig \

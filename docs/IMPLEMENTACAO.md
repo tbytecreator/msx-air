@@ -132,9 +132,10 @@ Usuarios nao tinham comando unico para execucao completa.
 1. `src/copy-systemroms.sh` — novo arquivo
    - **Deteccao automatica**: Verifica se openMSX foi instalado nativamente ou via Flatpak
    - **Nativo**: Copia ROMs de `src/systemroms/` para:
-     - `~/.local/share/openmsx/systemroms` (localizado primeiro)
-     - `~/.openmsx/systemroms` (fallback)
-   - **Flatpak**: Copia para `~/.openMSX/share/systemroms`
+     - `~/.local/share/openmsx/systemroms` (usuario XDG, localizado primeiro)
+     - `/usr/share/openmsx/systemroms` (global APT, se tiver permissoes)
+     - `~/.openmsx/systemroms` (legado/portatil)
+   - **Flatpak**: Copia para `~/.var/app/org.openmsx.openMSX/data/share/openmsx/systemroms` (sandbox de dados)
    - Funcoes de logging e validacao (erros sao criados se ROMs nao copiarem)
    - Valida existencia do diretorio source `src/systemroms/`
 
