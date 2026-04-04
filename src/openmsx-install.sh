@@ -15,83 +15,92 @@ error() {
   exit 1
 }
 
-require_command() {
-  if ! command -v "$1" >/dev/null 2>&1; then
-    error "Comando obrigatorio nao encontrado: $1"
-  fi
+is_openmsx_installed() {
+  command -v openMSX >/dev/null 2>&1
 }
 
-run_root() {
-  if [[ "${EUID}" -eq 0 ]]; then
-    "$@"
-    return
-  fi
-
-  if command -v sudo >/dev/null 2>&1; then
-    sudo "$@"
-    return
-  fi
-
-  error "Este script precisa de privilegios administrativos. Execute como root ou instale o sudo."
+get_openmsx_version() {
+  openMSX --version 2>/dev/null | head -n1 || echo "unknown"
 }
 
-is_flatpak_available() {
+verify_openmsx() {
+  if is_openmsx_installed; then
+    log "OpenMSX ja esta instalado: $(get_openmsx_version)"
+    return 0
+  fi
+  return 1
+}
+
+is_flatpak_installed() {
   command -v flatpak >/dev/null 2>&1
 }
 
-install_flatpak_if_needed() {
-  if is_flatpak_available; then
-    log "Flatpak ja esta instalado"
+setup_flathub_remote() {
+  if ! flatpak remotes 2>/dev/null | grep -q flathub; then
+    log "Adicionando repositorio flathub..."
+    flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo 2>/dev/null
+  fi
+}
+
+try_install_via_flatpak() {
+  if ! is_flatpak_installed; then
+    warn "Flatpak nao esta disponivel, tentando apt..."
+    return 1
+  fi
+
+  log "Tentando instalar OpenMSX via Flatpak..."
+  
+  if ! setup_flathub_remote 2>/dev/null; then
+    warn "Falha ao configurar flathub remote"
+    return 1
+  fi
+
+  if ! flatpak install -y --or-update flathub org.openmsx.openMSX 2>&1; then
+    warn "Falha na instalacao via Flatpak (ambiente pode ser restrito)"
+    return 1
+  fi
+
+  log "OpenMSX instalado com sucesso via Flatpak"
+  return 0
+}
+
+try_install_via_apt() {
+  log "Tentando instalar OpenMSX via apt..."
+  
+  if ! apt-get update 2>&1; then
+    warn "Falha ao atualizar cache de apt"
+    return 1
+  fi
+
+  if ! apt-get install -y openmsx 2>&1; then
+    warn "Falha na instalacao via apt"
+    return 1
+  fi
+
+  log "OpenMSX instalado com sucesso via apt"
+  return 0
+}
+
+install_openmsx() {
+  # Verifica se ja esta instalado
+  if verify_openmsx; then
     return 0
   fi
 
-  log "Flatpak nao encontrado. Tentando instalar..."
-
-  if [[ -r /etc/os-release ]]; then
-    # shellcheck disable=SC1091
-    source /etc/os-release
-    case "${ID:-}" in
-      debian|ubuntu)
-        require_command apt-get
-        run_root apt-get update
-        run_root apt-get install -y flatpak
-        ;;
-      fedora|rhel|centos)
-        require_command dnf
-        run_root dnf install -y flatpak
-        ;;
-      arch)
-        require_command pacman
-        run_root pacman -S flatpak
-        ;;
-      opensuse*)
-        require_command zypper
-        run_root zypper install flatpak
-        ;;
-      *)
-        error "Nao foi possivel instalar flatpak automaticamente nesta distribuicao. Instale manualmente e tente novamente."
-        ;;
-    esac
-  else
-    error "Nao foi possivel detectar a distribuicao. Instale flatpak manualmente."
+  warn "OpenMSX nao esta instalado"
+  
+  # Tenta Flatpak primeiro
+  if try_install_via_flatpak; then
+    return 0
   fi
 
-  log "Flatpak instalado com sucesso"
-}
-
-add_flathub_remote() {
-  if ! flatpak remotes | grep -q flathub; then
-    log "Adicionando repositorio flathub..."
-    run_root flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+  # Se Flatpak falhou, tenta apt
+  if try_install_via_apt; then
+    return 0
   fi
-}
 
-install_packages_via_flatpak() {
-  install_flatpak_if_needed
-  add_flathub_remote
-
-  log "Instalando OpenMSX via Flatpak (ultima versao)"
-  run_root flatpak install -y --or-update flathub org.openmsx.openMSX
+  # Ambas as tentativas falharam
+  error "Nao foi possivel instalar OpenMSX via Flatpak nem via apt"
 }
 
 ensure_media_dir() {
@@ -103,7 +112,7 @@ ensure_media_dir() {
 print_next_steps() {
   cat <<'EOF'
 
-Instalacao concluida.
+Instalacao/verificacao do OpenMSX concluida.
 
 Proximos passos:
 1. Ajuste as configuracoes em src/msxair.conf
@@ -113,7 +122,7 @@ EOF
 }
 
 main() {
-  install_packages_via_flatpak
+  install_openmsx
   ensure_media_dir
   print_next_steps
 }
