@@ -87,8 +87,8 @@ Este script:
 
 - Detecta automaticamente se OpenMSX foi instalado nativamente ou via Flatpak
 - Copia ROMs de `src/systemroms/` para o local correto:
-  - Nativo: `~/.local/share/openmsx/systemroms` ou `~/.openmsx/systemroms`
-  - Flatpak: `~/.openMSX/share/systemroms`
+  - Nativo (APT): `~/.local/share/openmsx/systemroms`, `/usr/share/openmsx/systemroms` (global), ou `~/.openmsx/systemroms` (legado)
+  - Flatpak: `~/.var/app/org.openmsx.openMSX/data/share/openmsx/systemroms`
 
 #### 5) Ajustar configuracao
 

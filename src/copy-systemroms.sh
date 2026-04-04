@@ -23,26 +23,15 @@ if [[ ! -d "${SYSTEMROMS_SRC}" ]]; then
 fi
 
 # Detecta o local de destino baseado no modo de instalacao do OpenMSX
-if command -v openmsx >/dev/null 2>&1; then
-  log "openMSX instalado nativamente detectado"
+if command -v flatpak >/dev/null 2>&1 && flatpak list --app 2>/dev/null | grep -q "org.openmsx.openMSX"; then
+  log "openMSX instalado via Flatpak detectado"
   
-  # Tenta encontrar o diretorio de systemroms do OpenMSX
-  # Primeiro tenta em ~/.local/share/openmsx/systemroms (instalacao de usuario Flatpak/AppImage)
-  # Depois em ~/.openmsx/systemroms (instalacao portavel)
-  # Depois tenta descobrir via openmsx -help
+  # Para Flatpak, as ROMs devem estar em ~/.var/app/org.openmsx.openMSX/data/share/openmsx/systemroms
+  # Este eh o sandbox de dados do Flatpak para OpenMSX
+  # Ref: https://flathub.org/apps/org.openmsx.openMSX
+  SYSTEMROMS_DEST="${HOME}/.var/app/org.openmsx.openMSX/data/share/openmsx/systemroms"
   
-  SYSTEMROMS_DEST=""
-  
-  if [[ -d "${HOME}/.local/share/openmsx/systemroms" ]]; then
-    SYSTEMROMS_DEST="${HOME}/.local/share/openmsx/systemroms"
-  elif [[ -d "${HOME}/.openmsx/systemroms" ]]; then
-    SYSTEMROMS_DEST="${HOME}/.openmsx/systemroms"
-  else
-    # Tenta criar no local padrao ~/.local/share/openmsx/systemroms
-    SYSTEMROMS_DEST="${HOME}/.local/share/openmsx/systemroms"
-  fi
-  
-  log "Local de destino: ${SYSTEMROMS_DEST}"
+  log "Local de destino (Flatpak): ${SYSTEMROMS_DEST}"
   
   mkdir -p "${SYSTEMROMS_DEST}"
   
@@ -51,14 +40,40 @@ if command -v openmsx >/dev/null 2>&1; then
   
   log "System ROMs copiadas com sucesso!"
   
-elif command -v flatpak >/dev/null 2>&1 && flatpak list --app 2>/dev/null | grep -q "org.openmsx.openMSX"; then
-  log "openMSX instalado via Flatpak detectado"
+elif command -v openmsx >/dev/null 2>&1; then
+  log "openMSX instalado nativamente detectado"
   
-  # Para Flatpak, as ROMs devem estar em ~/.openMSX/share/systemroms
-  # Veja: https://flathub.org/apps/org.openmsx.openMSX
-  SYSTEMROMS_DEST="${HOME}/.openMSX/share/systemroms"
+  # Para instalacao nativa (APT ou similar), procura pelos diretorios padrao
+  # Ordem de preferencia:
+  # 1. ~/.local/share/openmsx/systemroms (instalacao de usuario, XDG)
+  # 2. /usr/share/openmsx/systemroms (instalacao global via apt/pacote)
+  # 3. ~/.openmsx/systemroms (instalacao portatil/legado)
   
-  log "Local de destino: ${SYSTEMROMS_DEST}"
+  SYSTEMROMS_DEST=""
+  
+  if [[ -d "${HOME}/.local/share/openmsx/systemroms" ]]; then
+    SYSTEMROMS_DEST="${HOME}/.local/share/openmsx/systemroms"
+    log "Encontrado: ~/.local/share/openmsx/systemroms (usuario XDG)"
+  elif [[ -d "/usr/share/openmsx/systemroms" ]]; then
+    # Verificar se temos permissao de escrita
+    if [[ -w "/usr/share/openmsx/systemroms" ]]; then
+      SYSTEMROMS_DEST="/usr/share/openmsx/systemroms"
+      log "Encontrado: /usr/share/openmsx/systemroms (global, com permissao)"
+    else
+      # Se nao temos permissao global, usar ~/.local/share/openmsx/systemroms
+      SYSTEMROMS_DEST="${HOME}/.local/share/openmsx/systemroms"
+      warn "Sistema tem /usr/share/openmsx/systemroms mas sem permissao. Usando ~/.local/share/openmsx/systemroms"
+    fi
+  elif [[ -d "${HOME}/.openmsx/systemroms" ]]; then
+    SYSTEMROMS_DEST="${HOME}/.openmsx/systemroms"
+    log "Encontrado: ~/.openmsx/systemroms (legado/portatil)"
+  else
+    # Criar no local padrao XDG
+    SYSTEMROMS_DEST="${HOME}/.local/share/openmsx/systemroms"
+    log "Nenhum diretorio existente. Criando: ${SYSTEMROMS_DEST}"
+  fi
+  
+  log "Local de destino (nativo): ${SYSTEMROMS_DEST}"
   
   mkdir -p "${SYSTEMROMS_DEST}"
   

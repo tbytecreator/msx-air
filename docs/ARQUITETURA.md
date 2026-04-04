@@ -64,14 +64,16 @@
 - `src/copy-systemroms.sh` ⭐
   - **Novo**: Copia system ROMs de `src/systemroms/` para local correto
   - Detecta automaticamente: instalacao nativa vs Flatpak
-  - Cria diretory de destino se nao existir
-  - Nativo: `~/.local/share/openmsx/systemroms` ou `~/.openmsx/systemroms`
-  - Flatpak: `~/.openMSX/share/systemroms`
+  - Cria diretorio de destino se nao existir
+  - Nativo: `~/.local/share/openmsx/systemroms`, `/usr/share/openmsx/systemroms` (global APT), ou `~/.openmsx/systemroms` (legado)
+  - Flatpak: `~/.var/app/org.openmsx.openMSX/data/share/openmsx/systemroms`
 
 - `src/init-fullscreen.tcl` ⭐
   - **Novo**: Script Tcl com comando `set fullscreen on`
   - Carregado via `-script` ao iniciar openMSX
   - Ativa tela cheia automaticamente no startup
+  - Para Flatpak: copiado automaticamente para `~/.var/app/org.openmsx.openMSX/data/` para acesso dentro do sandbox
+  - Para nativo: usado direto do diretorio `src/`
 
 - `src/msxair.conf`
   - Centraliza parametros de execucao

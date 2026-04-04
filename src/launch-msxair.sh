@@ -80,7 +80,38 @@ if [[ "${EXTENSIONS[@]}" =~ "IDE" ]]; then
   setup_sunrise_ide
 fi
 
-args=( -script "${SCRIPT_DIR}/init-fullscreen.tcl" -machine "${MACHINE}" )
+# Prepara o script Tcl: para Flatpak, copia para local acessivel
+TCL_SCRIPT="${SCRIPT_DIR}/init-fullscreen.tcl"
+
+if [[ "${OPENMSX_CMD}" == *"flatpak"* ]]; then
+  # Para Flatpak, copiar o arquivo TCL para o sandbox de dados para garantir acesso
+  # O Flatpak tem acesso a ~/.var/app/org.openmsx.openMSX/data/
+  FLATPAK_DATA_DIR="${HOME}/.var/app/org.openmsx.openMSX/data"
+  mkdir -p "${FLATPAK_DATA_DIR}"
+  
+  # Copia o arquivo TCL para o sandbox
+  if [[ -f "${TCL_SCRIPT}" ]]; then
+    cp -f "${TCL_SCRIPT}" "${FLATPAK_DATA_DIR}/init-fullscreen.tcl"
+    TCL_SCRIPT="${FLATPAK_DATA_DIR}/init-fullscreen.tcl"
+    echo "[INFO] Script TCL copiado para sandbox Flatpak: ${TCL_SCRIPT}"
+  else
+    echo "[WARN] Script TCL nao encontrado: ${TCL_SCRIPT}. Iniciando sem fullscreen automatico."
+    TCL_SCRIPT=""
+  fi
+else
+  # Para nativo, usar o arquivo TCL direto
+  if [[ ! -f "${TCL_SCRIPT}" ]]; then
+    echo "[WARN] Script TCL nao encontrado: ${TCL_SCRIPT}. Iniciando sem fullscreen automatico."
+    TCL_SCRIPT=""
+  fi
+fi
+
+# Monta os argumentos do OpenMSX
+args=()
+if [[ -n "${TCL_SCRIPT}" ]]; then
+  args+=( -script "${TCL_SCRIPT}" )
+fi
+args+=( -machine "${MACHINE}" )
 
 for ext in "${EXTENSIONS[@]}"; do
   args+=( -ext "${ext}" )
