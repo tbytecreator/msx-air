@@ -35,6 +35,11 @@ is_flatpak_installed() {
   command -v flatpak >/dev/null 2>&1
 }
 
+is_in_container() {
+  # Detecta se esta executando em um container
+  [[ -f /.dockerenv ]] || [[ -f /run/.containerenv ]] || [[ -n "${DOCKER_CONTAINER:-}" ]]
+}
+
 setup_flathub_remote() {
   if ! flatpak remotes 2>/dev/null | grep -q flathub; then
     log "Adicionando repositorio flathub..."
@@ -67,12 +72,42 @@ try_install_via_flatpak() {
 try_install_via_apt() {
   log "Tentando instalar OpenMSX via apt..."
   
-  if ! apt-get update 2>&1; then
+  # Verifica se apt-get esta disponivel
+  if ! command -v apt-get >/dev/null 2>&1; then
+    warn "apt-get nao esta disponivel no sistema"
+    return 1
+  fi
+  
+  # Testa se apt-get pode ser executado
+  if ! apt-get --version >/dev/null 2>&1; then
+    local apt_error
+    apt_error=$(apt-get --version 2>&1 || true)
+    if echo "${apt_error}" | grep -q "cannot open shared object file"; then
+      warn "apt-get tem problemas com bibliotecas compartilhadas no ambiente atual"
+      warn "Isso geralmente indica um ambiente containerizado ou restrito"
+      return 1
+    fi
+    warn "apt-get nao pode ser executado: ${apt_error}"
+    return 1
+  fi
+  
+  # Determina se precisa usar sudo
+  local apt_cmd="apt-get"
+  if [[ $EUID -ne 0 ]]; then
+    if command -v sudo >/dev/null 2>&1; then
+      apt_cmd="sudo apt-get"
+    else
+      warn "Nao e possivel usar apt-get sem permissoes de root e sudo nao esta disponivel"
+      return 1
+    fi
+  fi
+  
+  if ! ${apt_cmd} update 2>&1; then
     warn "Falha ao atualizar cache de apt"
     return 1
   fi
 
-  if ! apt-get install -y openmsx 2>&1; then
+  if ! ${apt_cmd} install -y openmsx 2>&1; then
     warn "Falha na instalacao via apt"
     return 1
   fi
@@ -84,6 +119,15 @@ try_install_via_apt() {
 install_openmsx() {
   # Verifica se ja esta instalado
   if verify_openmsx; then
+    return 0
+  fi
+
+  # Se estiver rodando em um container, assume que OpenMSX ja foi instalado no Dockerfile
+  if is_in_container; then
+    log "Executando dentro de um container Docker"
+    log "OpenMSX deve ter sido instalado durante a construcao da imagem (Dockerfile)"
+    warn "OpenMSX nao sera instalado novamente neste processo"
+    log "Continuando sem paralizar..."
     return 0
   fi
 
@@ -99,8 +143,42 @@ install_openmsx() {
     return 0
   fi
 
-  # Ambas as tentativas falharam
-  error "Nao foi possivel instalar OpenMSX via Flatpak nem via apt"
+  # Ambas as tentativas falharam - oferece alternativas
+  warn "Nao foi possivel instalar OpenMSX via Flatpak nem via apt"
+  cat <<'EOF'
+
+===== OPCOES PARA USAR OPENMSX =====
+
+** RECOMENDADO PARA ESTE AMBIENTE **
+1. Docker (melhor para ambientes restringidos):
+   ./docker-run.sh
+   (Nao requer instalacao previa de OpenMSX)
+
+ALTERNATIVAS:
+2. Instalacao manual via Flatpak:
+   flatpak install flathub org.openmsx.openMSX
+
+3. Instalacao nativa por distribuicao:
+   - Ubuntu/Debian: sudo apt-get install openmsx
+   - Fedora: sudo dnf install openmsx
+   - Arch: sudo pacman -S openmsx
+   - Gentoo: emerge openmsx
+
+4. Pacotes pre-compilados:
+   https://openmsx.org/download
+
+5. Compilacao do codigo-fonte:
+   https://github.com/openMSX/openMSX
+
+======================================
+
+DIAGNOSTICO:
+- Este ambiente pode ser um container ou estar restringido
+- apt-get teve problemas ao carregar suas bibliotecas
+- Docker eh a opcao mais confiavel neste caso
+
+EOF
+  error "Por favor, use uma das opcoes acima"
 }
 
 ensure_media_dir() {
@@ -109,22 +187,9 @@ ensure_media_dir() {
   log "Diretorio de midias pronto em ${media_dir}"
 }
 
-print_next_steps() {
-  cat <<'EOF'
-
-Instalacao/verificacao do OpenMSX concluida.
-
-Proximos passos:
-1. Ajuste as configuracoes em src/msxair.conf
-2. Execute src/launch-msxair.sh para abrir o emulador
-3. Se quiser autostart em login, execute src/setup-autostart.sh
-EOF
-}
-
 main() {
   install_openmsx
   ensure_media_dir
-  print_next_steps
 }
 
 main "$@"

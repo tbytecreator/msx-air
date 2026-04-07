@@ -1,0 +1,21 @@
+# Configuração de caminhos para OpenMSX
+# Este arquivo é carregado automaticamente pelo OpenMSX
+
+# Força os caminhos de busca de system ROMs (ordem de prioridade)
+# Primeiro tenta /opt/msxair/src/systemroms (montado via docker)
+# Depois tenta /usr/share/openmsx/systemroms (link simbólico)
+# Depois tenta /root/.local/share/openmsx/systemroms (link simbólico)
+set systemrompath_common "/opt/msxair/src/systemroms:/usr/share/openmsx/systemroms:/root/.local/share/openmsx/systemroms"
+
+# Desabilita o cache para garantir leitura em tempo real
+set systemrompath_cached false
+
+# Garante que o OpenMSX procura em múltiplos caminhos
+set auto_load_extensions "true"
+
+# Configuração de áudio (para container)
+set sounddevice "alsahost"
+
+# Desabilita warnings de áudio que são frequentes em containers
+catch {set sounddriver sdl}
+

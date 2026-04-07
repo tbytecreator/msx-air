@@ -8,4 +8,4 @@ if [[ $# -gt 0 ]]; then
 fi
 
 # Sem comando explicito, inicia o launcher principal do projeto.
-exec /opt/msxair/src/msxair-setup.sh
+exec /opt/msxair/src/launch-msxair.sh

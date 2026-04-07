@@ -23,6 +23,11 @@ require_command() {
   fi
 }
 
+is_gnome_desktop() {
+  # Verifica se está em um ambiente GNOME
+  [[ -n "${GNOME_DESKTOP_SESSION_ID:-}" ]] || [[ "${XDG_CURRENT_DESKTOP:-}" == *"GNOME"* ]]
+}
+
 run_as_sudo() {
   if [[ "${EUID}" -eq 0 ]]; then
     "$@"
@@ -37,19 +42,32 @@ run_as_sudo() {
   error "Este script precisa de privilégios administrativos. Execute como root ou instale o sudo."
 }
 
-echo "=========================================="
-echo "Instalando Gnome Tweaks e Extensões"
-echo "=========================================="
+echo "[INFO] =========================================="
+echo "[INFO] Instalando Gnome Tweaks e Extensões"
+echo "[INFO] =========================================="
+echo ""
+
+# Verifica se está em um ambiente GNOME
+if ! is_gnome_desktop; then
+  warn "GNOME Desktop não detectado."
+  warn "Pulando instalação de Gnome Tweaks, Extensões e dependências."
+  warn "O script continuará a execução."
+  echo ""
+  log "Processo concluído sem alterações (GNOME não detectado)."
+  exit 0
+fi
+
+log "Ambiente GNOME detectado. Prosseguindo com a instalação..."
 echo ""
 
 # Verifica se está rodando em Debian/Ubuntu
 if ! command -v apt-get &> /dev/null; then
-  error "Sistema não suportado (requer apt-get). Este script funciona apenas em Debian/Ubuntu e derivados"
-fi
-
-# Verifica se está em um ambiente GNOME
-if [[ -z "${GNOME_DESKTOP_SESSION_ID:-}" ]] && [[ -z "${XDG_CURRENT_DESKTOP:-}" ]]; then
-  warn "GNOME Desktop não detectado. Prosseguindo mesmo assim..."
+  warn "Sistema não suportado (requer apt-get). Este script funciona apenas em Debian/Ubuntu e derivados"
+  warn "Pulando todas as instalações."
+  warn "O script continuará a execução."
+  echo ""
+  log "Processo concluído sem alterações (apt-get não disponível)."
+  exit 0
 fi
 
 log "Atualizando package lists..."
@@ -93,13 +111,4 @@ if command -v gnome-extensions >/dev/null 2>&1; then
 fi
 
 echo ""
-echo "=========================================="
-echo "✓ Instalação completa!"
-echo "=========================================="
-echo ""
-echo "Informações:"
-echo "  • Extensão 'No Overview at startup' foi instalada"
-echo "  • As extensões geralmente requerem reinicialização do GNOME Shell"
-echo "  • Para reiniciar: pressione Alt+F2, digite 'r' e confirme"
-echo "  • Ou faça logout e login novamente"
-echo ""
+log "Instalação concluída com sucesso!"

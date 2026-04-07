@@ -13,6 +13,11 @@ fi
 # shellcheck source=/dev/null
 source "${CONFIG_FILE}"
 
+# Garante que as system ROMs estão acessíveis (especialmente importante em container)
+if [[ -f "${SCRIPT_DIR}/ensure-systemroms.sh" ]]; then
+  bash "${SCRIPT_DIR}/ensure-systemroms.sh" || true
+fi
+
 if ! command -v openmsx >/dev/null 2>&1; then
   if ! command -v flatpak >/dev/null 2>&1; then
     echo "[ERROR] openMSX nao encontrado e Flatpak nao esta instalado." >&2
@@ -33,7 +38,8 @@ mkdir -p "${MEDIA_DIR}"
 
 # Preparacao da imagem de disco para Sunrise IDE
 setup_sunrise_ide() {
-  local hdd_image="/tmp/msxair-hdd.dsk"
+  local hdd_image="${HOME}/MSX/media/msxair-hdd.dsk"
+  mkdir -p "$(dirname "${hdd_image}")"
   
   if [[ ! -f "${hdd_image}" ]]; then
     echo "[INFO] Preparando imagem de disco para Sunrise IDE..."
@@ -46,6 +52,26 @@ setup_sunrise_ide() {
       # Monta a primeira partição
       echo "[INFO] Montando disco rígido virtual"
       diskmanipulator mount "${hdd_image}"
+      
+      # Instala Nextor na primeira partição
+      echo "[INFO] Instalando Nextor na primeira partição"
+      # Procura pelo arquivo Nextor ROM
+      local nextor_rom=""
+      for rom_path in "${SCRIPT_DIR}/systemroms/extensions/"Nextor*.rom "${SCRIPT_DIR}/systemroms/extensions/"Nextor*.SunriseIDE.rom; do
+        if [[ -f "${rom_path}" ]]; then
+          nextor_rom="${rom_path}"
+          break
+        fi
+      done
+      
+      if [[ -n "${nextor_rom}" ]]; then
+        echo "[INFO] Encontrado Nextor: ${nextor_rom}"
+        # Formata a primeira partição com Nextor
+        diskmanipulator format "${hdd_image}:1" /X "${nextor_rom}" 2>/dev/null || echo "[WARN] Nao foi possivel formatar com Nextor"
+      else
+        echo "[WARN] Arquivo Nextor ROM nao encontrado. Formatando com FAT12"
+        diskmanipulator format "${hdd_image}:1" /X 2>/dev/null || echo "[WARN] Nao foi possivel formatar o disco"
+      fi
       
       # Importa os diretórios nas partições (se existirem)
       if [[ -d "${HOME}/msxdostools/" ]]; then
@@ -119,7 +145,7 @@ done
 
 # Adiciona disco rígido IDE se extensao estiver ativa
 if [[ "${EXTENSIONS[@]}" =~ "IDE" ]]; then
-  args+=( -cartridge "hda:/tmp/msxair-hdd.dsk" )
+  args+=( -cartridge "hda:${HOME}/MSX/media/msxair-hdd.dsk" )
 fi
 
 if [[ -n "${AUTOSTART_ROM}" ]]; then

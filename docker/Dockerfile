@@ -35,6 +35,7 @@ RUN apt-get update --fix-missing \
         zlib1g \
         libpng16-16 \
         libglew2.2 \
+        libtcl8.6 \
         openmsx \
     && ldconfig
 
@@ -71,6 +72,11 @@ RUN chmod +x /opt/msxair/src/*.sh \
     && chmod +x /opt/msxair/entrypoint.sh \
     && bash -n /opt/msxair/src/msxair-setup.sh \
     && mkdir -p /root/MSX/media \
-    && bash -n /opt/msxair/src/setup-autostart.sh 
+    && mkdir -p /root/.local/share/openmsx \
+    && mkdir -p /root/.openmsx \
+    && ln -sf /opt/msxair/src/systemroms /root/.local/share/openmsx/systemroms \
+    && rm -rf /usr/share/openmsx/systemroms \
+    && ln -sf /opt/msxair/src/systemroms /usr/share/openmsx/systemroms \
+    && bash -n /opt/msxair/src/setup-autostart.sh
 
 ENTRYPOINT ["/opt/msxair/entrypoint.sh"]
