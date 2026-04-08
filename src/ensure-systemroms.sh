@@ -17,9 +17,21 @@ error() {
   exit 1
 }
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COPY_ROMS_SCRIPT="${SCRIPT_DIR}/copy-systemroms.sh"
+
 # Verifica se está em um container
 if [[ ! -f /.dockerenv ]] && [[ ! -f /run/.containerenv ]]; then
-  # Não está em container, usa copy-systemroms.sh normal
+  # Não está em container, tenta chamar copy-systemroms.sh para preparar ROMs
+  if [[ -f "${COPY_ROMS_SCRIPT}" ]]; then
+    log "Preparando system ROMs em ambiente nativo..."
+    bash "${COPY_ROMS_SCRIPT}" || {
+      warn "Falha ao preparar ROMs. Continuando mesmo assim..."
+      exit 0
+    }
+  else
+    warn "Script copy-systemroms.sh nao encontrado em: ${COPY_ROMS_SCRIPT}"
+  fi
   exit 0
 fi
 

@@ -67,3 +67,8 @@ log "Proximos passos:"
 log "1. Execute: ./src/launch-msxair.sh"
 log "2. O emulador deve iniciar em tela cheia"
 log "3. Aproveite o MSX Turbo-R emulado!"
+log ""
+log "Se houver problemas com autostart:"
+log "- Veja: docs/DEBUG-AUTOSTART.md"
+log "- Ou em VM: docs/DEBIAN-VM-SETUP.md"
+

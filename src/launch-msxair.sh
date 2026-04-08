@@ -18,6 +18,51 @@ if [[ -f "${SCRIPT_DIR}/ensure-systemroms.sh" ]]; then
   bash "${SCRIPT_DIR}/ensure-systemroms.sh" || true
 fi
 
+# Valida disponibilidade de ROMs do sistema
+validate_system_roms() {
+  echo "[INFO] Validando disponibilidade de system ROMs..."
+  
+  # Procura pelos diretórios de ROMs em ordem de preferência
+  local roms_dir=""
+  
+  if [[ -d "/usr/share/openmsx/systemroms" ]]; then
+    roms_dir="/usr/share/openmsx/systemroms"
+  elif [[ -d "${HOME}/.local/share/openmsx/systemroms" ]]; then
+    roms_dir="${HOME}/.local/share/openmsx/systemroms"
+  elif [[ -d "${HOME}/.var/app/org.openmsx.openMSX/data/share/openmsx/systemroms" ]]; then
+    roms_dir="${HOME}/.var/app/org.openmsx.openMSX/data/share/openmsx/systemroms"
+  else
+    echo "[WARN] Nenhum diretório de system ROMs encontrado"
+    return 1
+  fi
+  
+  if [[ ! -d "${roms_dir}" ]]; then
+    return 1
+  fi
+  
+  # Extrai o name da máquina (ex: Panasonic_FS-A1GT -> panasonic)
+  local machine_vendor
+  machine_vendor=$(echo "${MACHINE}" | cut -d'_' -f1 | tr '[:upper:]' '[:lower:]')
+  
+  # Verifica se há ROMs para o fabricante da máquina
+  if ! find "${roms_dir}/machines" -type d -iname "${machine_vendor}" >/dev/null 2>&1; then
+    echo "[WARN] Diretório de ROMs para '${machine_vendor}' nao encontrado em ${roms_dir}/machines"
+    echo "[WARN] ROMs disponíveis: $(ls -1 ${roms_dir}/machines 2>/dev/null | tr '\n' ',' | sed 's/,$//')"
+    return 1
+  fi
+  
+  local rom_count
+  rom_count=$(find "${roms_dir}/machines" -type d -iname "${machine_vendor}" -exec find {} -maxdepth 1 -name "*.rom" \; 2>/dev/null | wc -l)
+  echo "[INFO] ✓ Encontrado $rom_count arquivo(s) ROM para ${machine_vendor}"
+  return 0
+}
+
+# Valida ROMs, mas continua mesmo se falhar (openMSX pode ter fallback)
+if ! validate_system_roms; then
+  echo "[WARN] Verificacao de ROMs inconclusa. O openMSX pode nao conseguir iniciar."
+  echo "[WARN] Execute: ${SCRIPT_DIR}/copy-systemroms.sh"
+fi
+
 if ! command -v openmsx >/dev/null 2>&1; then
   if ! command -v flatpak >/dev/null 2>&1; then
     echo "[ERROR] openMSX nao encontrado e Flatpak nao esta instalado." >&2
@@ -35,6 +80,7 @@ else
 fi
 
 mkdir -p "${MEDIA_DIR}"
+
 
 # Preparacao da imagem de disco para Sunrise IDE
 setup_sunrise_ide() {
