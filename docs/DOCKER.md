@@ -13,14 +13,15 @@ Fornecer um ambiente de testes em container para a base do projeto MSX Air usand
 ## O que o Dockerfile faz
 
 1. Usa `debian:bookworm` como imagem base
-2. Instala `openmsx`, `alsa-utils`, `libasound2` e `libasound2-plugins`
+2. Instala `openmsx`, `python3`, `alsa-utils`, `libasound2` e `libasound2-plugins`
 3. Alinha o GID do grupo `audio` com o host (GID 29) para acesso correto a `/dev/snd/seq` e `/dev/snd/timer`
 4. Adiciona `root` ao grupo `audio`
 5. Copia `src/`, `docs/`, `msxair.md` e `openmsx-install.sh` para `/opt/msxair`
 6. Copia o conteudo de `src/systemroms` para o file pool de system ROMs do openMSX em `/usr/share/openmsx/systemroms`
-7. Ajusta permissoes de execucao dos scripts
-8. Cria o diretorio `/root/MSX/media`
-9. Valida sintaxe Bash de todos os scripts durante o build
+7. Gera imagem HDD com Nextor 2.1.0 via `create-nextor-hdd.py` (3 particoes FAT16, 96MB)
+8. Ajusta permissoes de execucao dos scripts
+9. Cria o diretorio `/root/MSX/media`
+10. Valida sintaxe Bash de todos os scripts durante o build
 
 ## Como construir
 
@@ -44,6 +45,7 @@ O `dockerrun.sh` detecta automaticamente e mapeia:
 | `/dev/snd`            | Dispositivos ALSA de audio    | Sem audio                 |
 | `/tmp/.X11-unix`      | Interface grafica X11         | Sem janela                |
 | `~/roms/msx`          | ROMs e DSKs do usuario        | Diretorio vazio           |
+| `~/MSX/media`         | Imagem HDD (Sunrise IDE)      | HDD pre-gerado no build   |
 
 Depois de entrar no container:
 

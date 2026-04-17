@@ -37,6 +37,7 @@ RUN apt-get update --fix-missing \
         libglew2.2 \
         libtcl8.6 \
         openmsx \
+        python3 \
     && ldconfig
 
 # Executa ldconfig final e limpa cache de apt
@@ -77,6 +78,7 @@ RUN chmod +x /opt/msxair/src/*.sh \
     && ln -sf /opt/msxair/src/systemroms /root/.local/share/openmsx/systemroms \
     && rm -rf /usr/share/openmsx/systemroms \
     && ln -sf /opt/msxair/src/systemroms /usr/share/openmsx/systemroms \
-    && bash -n /opt/msxair/src/setup-autostart.sh
+    && bash -n /opt/msxair/src/setup-autostart.sh \
+    && python3 /opt/msxair/src/create-nextor-hdd.py /root/MSX/media/msxair-hdd.dsk /opt/msxair/src/nextor-boot-files
 
 ENTRYPOINT ["/opt/msxair/entrypoint.sh"]

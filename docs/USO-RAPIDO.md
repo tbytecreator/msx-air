@@ -99,7 +99,22 @@ Edite `src/msxair.conf`:
 - `AUTOSTART_ROM` / `AUTOSTART_DSK` — opcional, midia carregada ao iniciar
 - `WIFI_PRE_START_CMD` — opcional, comando de preparacao de rede
 
-#### 6) Iniciar emulador
+#### 6) Criar imagem de disco rigido (Sunrise IDE + Nextor)
+
+A imagem HDD e criada automaticamente na primeira execucao do `launch-msxair.sh` se a extensao `ide` estiver ativa. Para criar manualmente:
+
+```bash
+python3 src/create-nextor-hdd.py ~/MSX/media/msxair-hdd.dsk src/nextor-boot-files/
+```
+
+A imagem contém:
+
+- 3 particoes FAT16 de 32MB (96MB total)
+- Nextor 2.1.0 (NEXTOR.SYS + COMMAND2.COM) na particao 1
+- Ferramentas Nextor no diretorio TOOLS/
+- AUTOEXEC.BAT configurado
+
+#### 7) Iniciar emulador
 
 ```bash
 ./src/launch-msxair.sh
@@ -107,7 +122,9 @@ Edite `src/msxair.conf`:
 
 O emulador inicia automaticamente **em tela cheia** (F11 para alternar).
 
-#### 7) Habilitar autostart no login (opcional)
+Se a extensao `ide` estiver configurada, o disco rigido Nextor sera montado automaticamente via `-hda`. O Nextor inicializara com `NEXTOR.SYS` e voce tera acesso as ferramentas em `A:\TOOLS`.
+
+#### 8) Habilitar autostart no login (opcional)
 
 ```bash
 ./src/setup-autostart.sh
@@ -126,6 +143,8 @@ systemctl --user start msxair-openmsx.service
 docker build -f docker/Dockerfile -t msxair:bookworm .
 ```
 
+A imagem Docker ja inclui o HDD com Nextor pre-gerado durante o build.
+
 ### 2) Executar o container
 
 Use o script `dockerrun.sh` — ele detecta automaticamente os dispositivos disponiveis no host:
@@ -141,7 +160,8 @@ cd /opt/msxair
 ./src/launch-msxair.sh
 ```
 
-> ROMs e DSKs devem ser colocados em `~/MSX/media` no host; este diretorio e montado automaticamente em `/root/MSX/media` no container.
+> ROMs e DSKs devem ser colocados em `~/roms/msx` no host; este diretorio e montado automaticamente em `/root/roms/msx` no container.
+> A imagem HDD em `~/MSX/media` e montada em `/root/MSX/media` no container (se existir no host).
 
 ---
 

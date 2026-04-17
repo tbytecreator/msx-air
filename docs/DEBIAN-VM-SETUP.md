@@ -5,16 +5,19 @@ Este guia é específico para instalar e configurar o MSX Air em uma máquina vi
 ## Considerações Especiais para VM
 
 ### Áudio em VM
+
 - A maioria das VMs não possui áudio físico (apenas virtual/simulado)
 - OpenMSX emitirá warnings sobre SDL audio não disponível
 - **Isso é normal e não impede o funcionamento** — o emulador funciona sem som
 
 ### Vídeo em VM
+
 - Certifique-se de ter aceleração 3D habilitada (se disponível)
 - KVM: `-vga qxl` ou `-device qxl-vga` melhoram performance
 - VirtualBox: Habilite "3D Acceleration" nas configurações
 
 ### Requisitos Mínimos
+
 - **CPU**: 2+ cores (4+ recomendado)
 - **RAM**: 2GB (4GB+ recomendado)
 - **Disco**: 1GB livre (para ROMs + dados do emulador)
@@ -51,13 +54,14 @@ chmod +x src/*.sh *.sh
 ```
 
 Este script:
+
 - ✅ Instala OpenMSX (nativo ou Flatpak)
 - ✅ Instala extensões GNOME (se disponível)
 - ✅ Copia system ROMs
 - ✅ Configura autostart no systemd
 - ✅ Testa o launcher
 
-**Se tudo passou sem erros, pule para seção "Usar o MSX Air"**
+Se tudo passou sem erros, pule para seção "Usar o MSX Air"
 
 ### 4. Setup Manual (Se Necessário)
 
@@ -90,6 +94,7 @@ sudo apt-get install -y openmsx
 ```
 
 Validar instalação:
+
 ```bash
 which openmsx
 openmsx --version
@@ -103,6 +108,7 @@ cd ~/msx-air
 ```
 
 Validar:
+
 ```bash
 find ~ -path "*openmsx/systemroms" -name "*.rom" | head -5
 ```
@@ -131,6 +137,7 @@ cd ~/msx-air
 ```
 
 Você deve ver:
+
 1. Tela do OpenMSX em fullscreen
 2. Logo do CBIOS ou menu customizado
 3. **Aviso sobre SDL audio é normal**
@@ -236,18 +243,21 @@ nano src/msxair.conf
 ## Próximas Ações
 
 1. **Criar pastas de mídia**:
+
    ```bash
    mkdir -p ~/roms/msx
    mkdir -p ~/MSX/media
    ```
 
 2. **Adicionar seus próprios ROMs**:
+
    ```bash
    # Coloque seus ROMs em ~/roms/msx
    cp seu-jogo.rom ~/roms/msx/
    ```
 
 3. **Configurar autostart de jogo**:
+
    ```bash
    # Editar src/msxair.conf
    nano src/msxair.conf
@@ -259,6 +269,7 @@ nano src/msxair.conf
    ```
 
 4. **Desabilitar avisos de áudio** (opcional):
+
    ```bash
    # Adicionar a launch-msxair.sh antes de exec:
    export SDL_AUDIODRIVER=dummy
@@ -267,6 +278,7 @@ nano src/msxair.conf
 ## Suporte Adicional
 
 Para diagnóstico detalhado, veja:
+
 - [DEBUG-AUTOSTART.md](DEBUG-AUTOSTART.md) — Diagnóstico de autostart
 - [USO-RAPIDO.md](USO-RAPIDO.md) — Instruções gerais de uso
 - [IMPLEMENTACAO.md](IMPLEMENTACAO.md) — Detalhes técnicos

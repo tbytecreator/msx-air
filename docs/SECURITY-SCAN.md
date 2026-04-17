@@ -14,6 +14,7 @@ Realizada varredura completa do projeto para detectar senhas, credenciais, token
 ## Verificações Realizadas
 
 ### 1. ✅ Arquivos de Configuração e Credenciais
+
 - ❌ Nenhum arquivo `.env` encontrado
 - ❌ Nenhum arquivo `.env.local`, `.env.prod`, etc. encontrado
 - ❌ Nenhum arquivo `.pem` ou certificados SSH
@@ -21,17 +22,20 @@ Realizada varredura completa do projeto para detectar senhas, credenciais, token
 - ❌ Nenhum arquivo de credenciais
 
 ### 2. ✅ Padrões de Senhas e Tokens
+
 - ❌ Nenhuma linha com `password`, `passwd`, `senha`, `pwd` (credenciais de verdade)
 - ❌ Nenhuma linha com `token`, `api_key`, `secret`, `credential`
 - ❌ Nenhuma linha com `AUTH=`, `TOKEN=`, `PASSWORD=` com valores sensíveis
 - ❌ Nenhuma chave AWS, Azure, Google Cloud ou similar
 
 ### 3. ✅ URLs e Endpoints Sensíveis
+
 - ❌ Nenhuma URL com credenciais embutidas (ex: `user:password@host`)
 - ❌ Nenhum endpoint de API privada com token hardcoded
 - ❌ Nenhum servidor localhost com porta hardcoded contendo credenciais
 
 ### 4. ✅ Informações de Usuário
+
 - ❌ Nenhuma email pessoal dentro de código ou configuração
 - ❌ Nenhum número de telefone
 - ❌ Nenhum endereço IP privado hardcoded
@@ -43,6 +47,7 @@ Realizada varredura completa do projeto para detectar senhas, credenciais, token
 **Problema:** Caminhos hardcoded de usuário específico
 
 #### Detalhes:
+
 ```bash
 # ❌ ANTES (Revelava nome de usuário)
 if [[ -d "/home/david/msxdostools/" ]]; then
@@ -51,6 +56,7 @@ if [[ -d "/home/david/msxdrawings/" ]]; then
 ```
 
 #### Correção Aplicada:
+
 ```bash
 # ✅ DEPOIS (Genérico, reutilizável)
 if [[ -d "${HOME}/msxdostools/" ]]; then
@@ -58,7 +64,8 @@ if [[ -d "${HOME}/msxdemos/" ]]; then
 if [[ -d "${HOME}/msxdrawings/" ]]; then
 ```
 
-**Risco:** 
+**Risco:**
+
 - Expunha nome de usuário (`david`) - informação de privacidade/segurança
 - Revelava estrutura específica de sistema
 - Havia potencial para pistas sobre estrutura de infraestrutura

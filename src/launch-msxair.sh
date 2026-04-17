@@ -85,57 +85,19 @@ mkdir -p "${MEDIA_DIR}"
 # Preparacao da imagem de disco para Sunrise IDE
 setup_sunrise_ide() {
   local hdd_image="${HOME}/MSX/media/msxair-hdd.dsk"
+  local nextor_dir="${SCRIPT_DIR}/nextor-boot-files"
   mkdir -p "$(dirname "${hdd_image}")"
   
   if [[ ! -f "${hdd_image}" ]]; then
     echo "[INFO] Preparando imagem de disco para Sunrise IDE..."
     
-    # Cria a imagem de disco com 3 partições de 32MB cada
-    if command -v diskmanipulator >/dev/null 2>&1; then
-      echo "[INFO] Criando imagem de disco: ${hdd_image}"
-      diskmanipulator create "${hdd_image}" 32M 32M 32M
-      
-      # Monta a primeira partição
-      echo "[INFO] Montando disco rígido virtual"
-      diskmanipulator mount "${hdd_image}"
-      
-      # Instala Nextor na primeira partição
-      echo "[INFO] Instalando Nextor na primeira partição"
-      # Procura pelo arquivo Nextor ROM
-      local nextor_rom=""
-      for rom_path in "${SCRIPT_DIR}/systemroms/extensions/"Nextor*.rom "${SCRIPT_DIR}/systemroms/extensions/"Nextor*.SunriseIDE.rom; do
-        if [[ -f "${rom_path}" ]]; then
-          nextor_rom="${rom_path}"
-          break
-        fi
-      done
-      
-      if [[ -n "${nextor_rom}" ]]; then
-        echo "[INFO] Encontrado Nextor: ${nextor_rom}"
-        # Formata a primeira partição com Nextor
-        diskmanipulator format "${hdd_image}:1" /X "${nextor_rom}" 2>/dev/null || echo "[WARN] Nao foi possivel formatar com Nextor"
-      else
-        echo "[WARN] Arquivo Nextor ROM nao encontrado. Formatando com FAT12"
-        diskmanipulator format "${hdd_image}:1" /X 2>/dev/null || echo "[WARN] Nao foi possivel formatar o disco"
-      fi
-      
-      # Importa os diretórios nas partições (se existirem)
-      if [[ -d "${HOME}/msxdostools/" ]]; then
-        echo "[INFO] Importando msxdostools para hda1"
-        diskmanipulator import "${hdd_image}:1" "${HOME}/msxdostools/" 2>/dev/null || true
-      fi
-      
-      if [[ -d "${HOME}/msxdemos/" ]]; then
-        echo "[INFO] Importando msxdemos para hda2"
-        diskmanipulator import "${hdd_image}:2" "${HOME}/msxdemos/" 2>/dev/null || true
-      fi
-      
-      if [[ -d "${HOME}/msxdrawings/" ]]; then
-        echo "[INFO] Importando msxdrawings para hda3"
-        diskmanipulator import "${hdd_image}:3" "${HOME}/msxdrawings/" 2>/dev/null || true
-      fi
+    if [[ -f "${SCRIPT_DIR}/create-nextor-hdd.py" ]]; then
+      echo "[INFO] Criando imagem HDD com Nextor via create-nextor-hdd.py"
+      python3 "${SCRIPT_DIR}/create-nextor-hdd.py" "${hdd_image}" "${nextor_dir}" <<< "s"
     else
-      echo "[WARN] diskmanipulator nao encontrado. Pulando configuracao de disco"
+      echo "[ERROR] Script create-nextor-hdd.py nao encontrado em ${SCRIPT_DIR}" >&2
+      echo "[ERROR] Execute a partir do diretorio src/ do projeto MSX Air." >&2
+      return 1
     fi
   else
     echo "[INFO] Imagem de disco ja existe: ${hdd_image}"
@@ -148,7 +110,7 @@ if [[ -n "${WIFI_PRE_START_CMD}" ]]; then
 fi
 
 # Configura Sunrise IDE se extensao estiver ativa
-if [[ "${EXTENSIONS[@]}" =~ "IDE" ]]; then
+if [[ "${EXTENSIONS[*]}" =~ "ide" ]] || [[ "${EXTENSIONS[*]}" =~ "IDE" ]]; then
   setup_sunrise_ide
 fi
 
@@ -190,8 +152,13 @@ for ext in "${EXTENSIONS[@]}"; do
 done
 
 # Adiciona disco rígido IDE se extensao estiver ativa
-if [[ "${EXTENSIONS[@]}" =~ "IDE" ]]; then
-  args+=( -cartridge "hda:${HOME}/MSX/media/msxair-hdd.dsk" )
+if [[ "${EXTENSIONS[*]}" =~ "ide" ]] || [[ "${EXTENSIONS[*]}" =~ "IDE" ]]; then
+  HDD_PATH="${HOME}/MSX/media/msxair-hdd.dsk"
+  if [[ -f "${HDD_PATH}" ]]; then
+    args+=( -hda "${HDD_PATH}" )
+  else
+    echo "[WARN] Imagem HDD nao encontrada: ${HDD_PATH}. IDE sem disco."
+  fi
 fi
 
 if [[ -n "${AUTOSTART_ROM}" ]]; then

@@ -6,6 +6,8 @@ A imagem usa Debian Bookworm (`debian:bookworm`) como solicitado.
 
 Durante o build, o conteudo de `src/systemroms` e copiado para `/usr/share/openmsx/systemroms`, que corresponde ao file pool `share/systemroms` documentado pelo openMSX no Linux.
 
+Durante o build, uma imagem de disco rigido (HDD) com Nextor 2.1.0 e gerada automaticamente em `/root/MSX/media/msxair-hdd.dsk` (96MB, 3 particoes FAT16). Isso permite que o emulador inicie com a extensao Sunrise IDE funcional.
+
 ## Build
 
 Na raiz do projeto:

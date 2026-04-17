@@ -365,6 +365,11 @@ fi
 # Adiciona volumes de mídia e ROMs
 DOCKER_RUN_ARGS+=(-v "${HOME}/roms/msx":/root/roms/msx)
 
+# Monta o diretório de imagens HDD (para Sunrise IDE com Nextor)
+if [[ -d "${HOME}/MSX/media" ]]; then
+  DOCKER_RUN_ARGS+=(-v "${HOME}/MSX/media":/root/MSX/media)
+fi
+
 # Obtém o diretório do script para montar os system ROMs
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ -d "${SCRIPT_DIR}/src/systemroms" ]]; then

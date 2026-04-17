@@ -22,11 +22,21 @@ Esta base cobre:
 - Verificacao automatizada de dependencias do host (SDL2, ALSA, OpenGL)
 - Setup unificado via `msxair-setup.sh` que executa todos os passos em ordem
 
+**Disco rigido virtual (Sunrise IDE + Nextor):**
+
+- Imagem HDD de 96MB com 3 particoes FAT16 (32MB cada)
+- Nextor 2.1.0 pre-instalado (NEXTOR.SYS + COMMAND2.COM)
+- Ferramentas Nextor no diretorio TOOLS/ (MAPDRV, EMUFILE, DEVINFO, etc.)
+- Criacao automatica no primeiro lancamento se extensao `ide` ativa
+- Script Python independente (`create-nextor-hdd.py`) — nao depende do openMSX
+- AUTOEXEC.BAT configurado com PATH para ferramentas
+
 **Execucao:**
 
 - Inicializacao do emulador em maquina Turbo-R (Panasonic FS-A1GT)
 - Inicializacao automatica em **tela cheia**
 - Carregamento de extensoes (SD mapper, FM, SCC, V9990)
+- Disco rigido IDE montado automaticamente via `-hda`
 - Diretorio configuravel para ROM/DSK
 - Suporte a autostart de ROM ou disco
 - Comando de preparacao de rede via host (e.g., Wi-Fi)
@@ -34,8 +44,10 @@ Esta base cobre:
 **Container Docker:**
 
 - Imagem baseada em Debian Bookworm para testes isolados
+- HDD com Nextor pre-gerado durante o build do container
 - Suporte a audio via ALSA dentro do container
 - Mapeamento condicional de dispositivos graficos e de audio (compativel com Crostini/Chromebook)
+- Volume `~/MSX/media` montado para acesso ao HDD do host
 - Scripts de build e execucao automatizados
 
 **Deteccao inteligente:**

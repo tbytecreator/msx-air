@@ -23,6 +23,7 @@ chmod +x src/*.sh
 ```
 
 Este script executa todos os passos em sequência:
+
 1. Instala OpenMSX
 2. Instala extensão GNOME (opcional)
 3. **Copia system ROMs** ← Passo crítico!
@@ -51,7 +52,8 @@ systemctl --user status msxair-openmsx.service
 ```
 
 Resultado esperado:
-```
+
+```ascii
 ● msxair-openmsx.service - MSX Air openMSX launcher
    Loaded: loaded (/home/user/.config/systemd/user/msxair-openmsx.service; enabled; vendor preset: enabled)
    Active: inactive (dead) since ... (última execução)
@@ -68,13 +70,15 @@ Deixe o terminal aberto e reinicie o computador. Você verá os logs do serviço
 #### 3. Erro Comum: "Couldn't find ROM file"
 
 Se você vir no log:
-```
+
+```ascii
 Fatal error: Error in "Panasonic_FS-A1GT" machine: Couldn't find ROM file for "PanasonicRom" fs-a1gt_firmware.rom...
 ```
 
 **Causa**: As system ROMs não foram instaladas ou não estão no caminho esperado.
 
 **Solução**:
+
 ```bash
 # Copie as ROMs
 ./src/copy-systemroms.sh
@@ -122,9 +126,11 @@ Antes de confiar no autostart, teste o launcher para garantir que funciona:
 ```
 
 Se o launcher funcionar mas o serviço não iniciar:
+
 - Verifique se há dispositivo de áudio (virtual ou não)
 - Verifique se o espaço em disco é suficiente
 - Reinstale o serviço:
+
   ```bash
   systemctl --user daemon-reload
   systemctl --user enable --now msxair-openmsx.service
@@ -139,6 +145,7 @@ cat ~/.config/systemd/user/msxair-openmsx.service
 ```
 
 Deve parecer com:
+
 ```ini
 [Unit]
 Description=MSX Air openMSX launcher
@@ -180,6 +187,7 @@ Se forem diferentes, haverá problemas ao encontrar `/src/msxair.conf`.
 #### Problema: "systemctl --user nao encontrado"
 
 Solução: Instale `systemd`:
+
 ```bash
 sudo apt-get install systemd
 ```
@@ -189,6 +197,7 @@ sudo apt-get install systemd
 Causa: Você está em um container ou em uma sessão sem bus de usuário.
 
 Solução: Use setup manual sem autostart:
+
 ```bash
 ./src/launch-msxair.sh
 ```
@@ -198,6 +207,7 @@ Solução: Use setup manual sem autostart:
 Causa: Erro no launcher ou ROMs inválidas.
 
 Solução: Verifique os logs:
+
 ```bash
 journalctl --user -u msxair-openmsx.service -n 50
 ```
@@ -207,11 +217,13 @@ journalctl --user -u msxair-openmsx.service -n 50
 Se nenhuma das soluções acima funcionou:
 
 1. **Teste o launcher manualmente**:
+
    ```bash
    ./src/launch-msxair.sh
    ```
 
 2. **Verifique se OpenMSX está instalado**:
+
    ```bash
    which openmsx
    openmsx --version
@@ -220,16 +232,19 @@ Se nenhuma das soluções acima funcionou:
    ```
 
 3. **Verifique as dependências**:
+
    ```bash
    ./src/check-deps.sh
    ```
 
 4. **Reexecute o setup completo**:
+
    ```bash
    ./src/msxair-setup.sh
    ```
 
 5. **Recrie o serviço**:
+
    ```bash
    systemctl --user disable msxair-openmsx.service
    rm ~/.config/systemd/user/msxair-openmsx.service
@@ -257,6 +272,7 @@ sudo reboot
 ---
 
 **Dúvidas?** Verifique todos os logs disponíveis:
+
 - Logs do serviço: `journalctl --user -u msxair-openmsx.service -n 100`
 - Logs de sistema: `journalctl -e -n 50`
 - Status: `systemctl --user status msxair-openmsx.service`

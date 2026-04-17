@@ -235,6 +235,122 @@ if [[ -d "${HOME}/msxdrawings/" ]]; then
 
 ---
 
+## Fase 7 — Imagem de disco rigido (HDD) com Nextor para Sunrise IDE
+
+### Problema: extensao IDE sem disco rigido
+
+A extensao `ide` (Sunrise IDE) estava configurada em `msxair.conf`, mas nao havia imagem de disco rigido para o emulador. O script `launch-msxair.sh` tentava usar `diskmanipulator` como comando externo, mas esse e um comando interno do openMSX (acessivel apenas via console Tcl).
+
+### Solucao: criacao de imagem HDD via Python (independente do openMSX)
+
+Criado script Python que gera diretamente uma imagem de disco rigido com estrutura MBR + FAT16 compativel com Nextor/Sunrise IDE, sem depender do openMSX ou de ferramentas externas.
+
+### Arquivos criados
+
+1. `src/create-nextor-hdd.py` — script principal de criacao de HDD
+   - Gera imagem binaria com MBR valido (assinatura 0x55AA)
+   - 3 particoes FAT16 de ~32MB cada (tipo 0x06)
+   - Particao 1: boot com NEXTOR.SYS, COMMAND2.COM, MSXDOS.SYS, COMMAND.COM
+   - Subdiretorio TOOLS/ com 13 ferramentas Nextor
+   - AUTOEXEC.BAT com `SET PATH=A:\TOOLS`
+   - Particoes 2 e 3: formatadas e vazias (uso geral)
+   - Nao requer openMSX, Flatpak, display ou dependencias externas
+   - Uso: `python3 create-nextor-hdd.py [saida] [dir-nextor-files]`
+
+2. `src/create-hdd-image.sh` — script shell alternativo (via openMSX + Tcl)
+   - Detecta openMSX nativo ou Flatpak
+   - Baixa ferramentas Nextor v2.1.0 se necessario
+   - Usa `create-hdd.tcl` para criacao via `diskmanipulator` do openMSX
+
+3. `src/create-hdd.tcl` — script Tcl para openMSX
+   - Executa `diskmanipulator create` com 3 particoes Nextor
+   - Importa arquivos de boot e ferramentas nas particoes
+
+4. `src/nextor-boot-files/` — diretorio com arquivos Nextor 2.1.0
+   - NEXTOR.SYS (4467 bytes) — kernel Nextor
+   - COMMAND2.COM (23935 bytes) — shell Nextor
+   - MSXDOS.SYS (2432 bytes) — compatibilidade MSX-DOS 1
+   - COMMAND.COM (6656 bytes) — shell MSX-DOS 1
+   - 13 ferramentas: MAPDRV, EMUFILE, DEVINFO, DRIVERS, DRVINFO, etc.
+
+### Arquivos modificados
+
+1. `src/launch-msxair.sh`
+   - Funcao `setup_sunrise_ide()` reescrita: usa `create-nextor-hdd.py` em vez de `diskmanipulator`
+   - Corrigido flag de disco: `-cartridge "hda:..."` → `-hda`
+   - Corrigida deteccao de extensao IDE: case-insensitive (`"ide"` e `"IDE"`)
+   - Disco HDD adicionado automaticamente aos argumentos quando extensao IDE ativa
+
+2. `docker/Dockerfile`
+   - Adicionado `python3` as dependencias instaladas
+   - Imagem HDD gerada durante o build via `create-nextor-hdd.py`
+
+3. `docker-run.sh`
+   - Adicionado volume `$HOME/MSX/media` montado em `/root/MSX/media`
+   - Permite que imagem HDD do host seja usada dentro do container
+
+### Detalhes tecnicos da imagem HDD
+
+| Caracteristica     | Valor                        |
+|--------------------|------------------------------|
+| Formato            | MBR + 3 particoes FAT16      |
+| Tamanho total      | 96 MB                        |
+| Setores/cluster    | 32 (16KB clusters)           |
+| Setores/trilha     | 63                           |
+| Cabecas            | 16                           |
+| Tipo particao      | 0x06 (FAT16 > 32MB)          |
+| OEM                | NEXTOR20                     |
+| Compatibilidade    | Sunrise IDE / openMSX `-hda` |
+
+### Estrutura da imagem
+
+```
+msxair-hdd.dsk (96MB)
+├── MBR (setor 0, assinatura 0x55AA)
+├── Particao 1 - MSXAIR P1 (32MB, FAT16, bootavel)
+│   ├── NEXTOR.SYS
+│   ├── COMMAND2.COM
+│   ├── MSXDOS.SYS
+│   ├── COMMAND.COM
+│   ├── AUTOEXEC.BAT
+│   └── TOOLS/
+│       ├── DELALL.COM
+│       ├── DEVINFO.COM
+│       ├── DRIVERS.COM
+│       ├── DRVINFO.COM
+│       ├── EMUFILE.COM
+│       ├── FASTOUT.COM
+│       ├── LOCK.COM
+│       ├── MAPDRV.COM
+│       ├── RALLOC.COM
+│       ├── Z80MODE.COM
+│       ├── NSYSVER.COM
+│       ├── NEXBOOT.COM
+│       └── CONCLUS.COM
+├── Particao 2 - MSXAIR P2 (32MB, FAT16, vazia)
+└── Particao 3 - MSXAIR P3 (32MB, FAT16, vazia)
+```
+
+### Comando de execucao do emulador com HDD
+
+```bash
+# Nativo
+openmsx -machine Panasonic_FS-A1GT -ext ide -hda ~/MSX/media/msxair-hdd.dsk
+
+# Via MSX Air
+./src/launch-msxair.sh
+```
+
+### Resultado
+
+- Emulador Turbo-R inicia com disco rigido Nextor funcional
+- Boot automatico via NEXTOR.SYS com shell COMMAND2.COM
+- Ferramentas Nextor acessiveis via `A:\TOOLS`
+- Imagem gerada automaticamente no primeiro lancamento se nao existir
+- Docker: imagem HDD pre-gerada durante o build
+
+---
+
 ## Observacoes tecnicas gerais
 
 - Nomes de extensao do openMSX podem variar por versao/pacote. Valide com `openmsx -ext list`.
@@ -242,12 +358,6 @@ if [[ -d "${HOME}/msxdrawings/" ]]; then
 - GNOME Extension Manager pode ser instalada para gerenciamento manual de extensoes caso instalacao automatica falhe.
 
 ## Proxima etapa sugerida
-
-- **Validacao pre-execucao**: Script que verifica disponibilidade de componentes
-  - Disponibilidade da maquina Turbo-R instalada
-  - Disponibilidade das extensoes configuradas (`openmsx -ext list`)
-  - Existencia dos arquivos ROM/DSK definidos em `AUTOSTART_ROM`, `AUTOSTART_DSK`
-  - Acesso de leitura ao diretorio `MEDIA_DIR`
 
 - **Controlador de jogo via rede (remote gamepad)**
   - Suporte a joystick via socket UDP/TCP
