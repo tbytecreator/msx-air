@@ -127,7 +127,7 @@ A imagem contem:
 
 O emulador inicia automaticamente **em tela cheia** (F11 para alternar).
 
-Se a extensao `ide` estiver configurada, o disco rigido Nextor sera montado automaticamente via `-hda`. O Nextor inicializara com `NEXTOR.SYS` e voce tera acesso as ferramentas em `A:\TOOLS`.
+Se a extensao `nextor-ide` estiver configurada, o disco rigido Nextor sera montado automaticamente via `-hda`. O Nextor inicializara e voce tera acesso as ferramentas em `C:\TOOLS`.
 
 #### 8) Habilitar autostart no login (opcional)
 

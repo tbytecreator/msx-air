@@ -28,7 +28,7 @@ Esta base cobre:
 - Nextor 2.1.4 (ROM) / NEXTOR.SYS v2.1.3 instalado automaticamente
 - 14 ferramentas Nextor no diretorio TOOLS/ (inclui EPTCFT.COM v2.1.2)
 - Download automatico dos arquivos mais recentes via `download-nextor-latest.sh`
-- Criacao automatica no primeiro lancamento se extensao `ide` ativa
+- Criacao automatica no primeiro lancamento se extensao `nextor-ide` ativa
 - Script Python independente (`create-nextor-hdd.py`) — nao depende do openMSX
 - AUTOEXEC.BAT exibe versao do Nextor via NSYSVER ao iniciar
 

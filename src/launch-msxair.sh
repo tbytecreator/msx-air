@@ -121,6 +121,31 @@ if [[ "${EXTENSIONS[*]}" =~ "ide" ]] || [[ "${EXTENSIONS[*]}" =~ "IDE" ]]; then
   setup_sunrise_ide
 fi
 
+# Cria floppy FAT12 vazio no host para evitar "not ready reading drive A:" do Nextor.
+# O FS-A1GT tem drive de disquete interno; sem disco em A:, o Nextor trava.
+# Criamos aqui (antes do sandbox Flatpak) e passamos via -diska na linha de comando.
+EMPTY_FLOPPY="${HOME}/MSX/media/msxair-empty-floppy.dsk"
+if [[ ! -f "${EMPTY_FLOPPY}" ]]; then
+  mkdir -p "$(dirname "${EMPTY_FLOPPY}")"
+  python3 - "${EMPTY_FLOPPY}" <<'PYEOF'
+import sys, struct
+p = sys.argv[1]
+d = bytearray(1440 * 512)
+b = bytearray(512)
+b[0:3] = b'\xeb\x3c\x90'; b[3:11] = b'MSXDOS  '
+struct.pack_into('<H', b, 11, 512); b[13] = 2
+struct.pack_into('<H', b, 14, 1);   b[16] = 2
+struct.pack_into('<H', b, 17, 112); struct.pack_into('<H', b, 19, 1440)
+b[21] = 0xF9; struct.pack_into('<H', b, 22, 3)
+struct.pack_into('<H', b, 24, 9);   struct.pack_into('<H', b, 26, 2)
+b[510] = 0x55; b[511] = 0xAA; d[0:512] = b
+d[512] = 0xF9; d[513] = 0xFF; d[514] = 0xFF       # FAT1
+d[4*512] = 0xF9; d[4*512+1] = 0xFF; d[4*512+2] = 0xFF  # FAT2
+open(p, 'wb').write(d)
+PYEOF
+  echo "[INFO] Floppy vazio criado: ${EMPTY_FLOPPY}"
+fi
+
 # Prepara o script Tcl: para Flatpak, copia para local acessivel
 TCL_SCRIPT="${SCRIPT_DIR}/init-fullscreen.tcl"
 
@@ -172,6 +197,11 @@ fi
 
 if [[ -n "${AUTOSTART_ROM}" ]]; then
   args+=( -cart "${AUTOSTART_ROM}" )
+fi
+
+# Usa floppy vazio em A: (apenas se o usuario nao definiu AUTOSTART_DSK)
+if [[ -z "${AUTOSTART_DSK}" ]] && [[ -f "${EMPTY_FLOPPY}" ]]; then
+  args+=( -diska "${EMPTY_FLOPPY}" )
 fi
 
 if [[ -n "${AUTOSTART_DSK}" ]]; then

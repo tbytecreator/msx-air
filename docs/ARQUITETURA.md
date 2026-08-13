@@ -59,6 +59,8 @@
   - **Novo**: Script de setup unificado que executa todos os passos em ordem
   - Executa em sequência: `openmsx-install.sh` → `nooverview-install.sh` → `download-nextor-latest.sh` → `copy-systemroms.sh` → `setup-autostart.sh`
   - `download-nextor-latest.sh` é tratado como passo opcional (falha de rede nao aborta o setup)
+  - Apos os scripts de setup, reconstroi automaticamente a imagem Docker se `docker` estiver disponivel
+  - Ao final, chama `launch-msxair.sh` para iniciar o emulador
   - Valida permissões e existência dos scripts
   - Para imediatamente se algum passo critico falhar
   - Mensagens de progresso com barras visuais
@@ -92,6 +94,7 @@
 - `src/msxair.conf`
   - Centraliza parametros de execucao
   - Define maquina Turbo-R (Panasonic_FS-A1GT) e extensoes desejadas
+  - Extensao IDE: `nextor-ide` (extensao customizada que carrega o ROM Nextor)
   - Permite informar ROM/DSK de autostart
   - Suporte a comando de preparacao de rede (WIFI_PRE_START_CMD)
 
@@ -118,6 +121,12 @@
   - Cria 3 particoes de 32MB no formato Nextor
   - Importa arquivos de boot e ferramentas nas particoes
 
+- `src/nextor-ide.xml` ⭐
+  - **Novo**: Extensao openMSX customizada para Sunrise IDE com Nextor
+  - O `ide.xml` padrao do openMSX 20.0 so aceita SHA1 do Sunrise IDE classico (sem Nextor)
+  - Este XML lista os SHA1 dos ROMs Nextor 2.0, 2.0.1, 2.1.0 e 2.1.4 para openMSX
+  - Instalado em `/usr/share/openmsx/extensions/` no container e em `~/.openMSX/share/extensions/` para Flatpak
+
 - `src/download-nextor-latest.sh` ⭐
   - **Novo**: Baixa os arquivos mais recentes do Nextor (2.1.4) do GitHub
   - `Nextor-2.1.4.SunriseIDE.blueMSX.rom` → `systemroms/extensions/` (ROM para openMSX)
@@ -137,7 +146,8 @@
   - Carrega script de fullscreen via `-script init-fullscreen.tcl`
   - Garante existencia do diretorio de midia
   - Cria imagem HDD automaticamente se extensao IDE ativa e imagem nao existir
-  - Monta os argumentos do openMSX com `-hda` para disco rigido IDE
+  - Cria `~/MSX/media/msxair-empty-floppy.dsk` (FAT12 720KB) antes do boot para evitar "not ready reading drive A:" do FS-A1GT
+  - Monta os argumentos do openMSX com `-hda` (disco rigido) e `-diska` (floppy vazio)
   - Inicia o emulador
 
 - `src/setup-autostart.sh`
@@ -149,6 +159,7 @@
   - Instala openMSX, alsa-utils, libasound2, libasound2-plugins e python3
   - Alinha GID do grupo audio com o host (GID 29) para acesso correto a /dev/snd
   - Copia `src/`, `docs/` e scripts raiz para `/opt/msxair`
+  - Instala `nextor-ide.xml` em `/usr/share/openmsx/extensions/` para que o openMSX carregue o ROM Nextor
   - Gera imagem HDD com Nextor durante o build (via create-nextor-hdd.py)
 
 - `dockerrun.sh`

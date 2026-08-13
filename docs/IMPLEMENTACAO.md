@@ -336,7 +336,7 @@ msxair-hdd.dsk (96MB)
 
 ```bash
 # Nativo
-openmsx -machine Panasonic_FS-A1GT -ext ide -hda ~/MSX/media/msxair-hdd.dsk
+openmsx -machine Panasonic_FS-A1GT -ext nextor-ide -hda ~/MSX/media/msxair-hdd.dsk
 
 # Via MSX Air
 ./src/launch-msxair.sh
@@ -426,6 +426,142 @@ A ROM para emuladores foi renomeada: `SunriseIDE.emulators.ROM` passou a ser `Su
 - AUTOEXEC.BAT exibe a versao real do Nextor via NSYSVER ao entrar no MSX-DOS
 - `download-nextor-latest.sh` pode ser re-executado a qualquer momento para atualizar
 - Setup automatico (`msxair-setup.sh`) baixa arquivos atualizados se houver internet
+
+---
+
+## Fase 9 — Extensao nextor-ide.xml: correcao do boot com Nextor
+
+### Problema: extensao `ide` do openMSX nao carrega o ROM do Nextor
+
+Apesar do ROM `Nextor-2.1.4.SunriseIDE.blueMSX.rom` estar na pasta `systemroms/extensions/`, o openMSX 20.0 carregava o `ide240.dat` (Sunrise IDE classioco, sem Nextor). O motivo: o arquivo `ide.xml` interno do openMSX lista apenas os SHA1 dos ROMs Sunrise IDE padrao (`ide240.dat`, `ide250.dat`, `ide221.dat`) — nenhum ROM Nextor esta na lista. Com o IDE classico carregado, o HDD nao subia Nextor.
+
+Diagnostico: verificado inspecionando o pacote `openmsx-data` (v20.0) com `apt-get download` + `dpkg -x`, lendo `/usr/share/openmsx/extensions/ide.xml`. SHA1 confirmados com `sha1sum`.
+
+### Solucao: extensao personalizada `nextor-ide.xml`
+
+### Arquivos criados
+
+1. `src/nextor-ide.xml` — extensao openMSX customizada
+   - Substitui a extensao `ide` para carregar o ROM Nextor corretamente
+   - Lista os SHA1 dos 4 ROMs Nextor/SunriseIDE presentes no projeto:
+     - `fe5763b...` — Nextor 2.1.4 SunriseIDE.blueMSX
+     - `97094d5...` — Nextor 2.1.0 SunriseIDE.emulators
+     - `61cba16...` — Nextor 2.0.1 SunriseIDE
+     - `ab1d6dc...` — Nextor 2.0 SunriseIDE
+   - Mantém mesma estrutura (`<SunriseIDE>`) do `ide.xml` original
+
+### Arquivos modificados
+
+1. `src/msxair.conf`
+   - `EXTENSIONS`: `"ide"` → `"nextor-ide"`
+
+2. `docker/Dockerfile`
+   - Adicionado `cp nextor-ide.xml /usr/share/openmsx/extensions/nextor-ide.xml` no build
+   - Permite que o container use a extensao sem etapa adicional
+
+3. `src/copy-systemroms.sh`
+   - Para **Flatpak**: copia `nextor-ide.xml` para `~/.openMSX/share/extensions/` (caminho que o Flatpak realmente busca, nao `~/.var/app/.../data/`)
+   - Para **nativo**: copia para `/usr/share/openmsx/extensions/` (se gravavel) ou `~/.local/share/openmsx/extensions/`
+
+4. `src/launch-msxair.sh`
+   - Para **Flatpak**: copia `nextor-ide.xml` para `~/.openMSX/share/extensions/` antes de iniciar o emulador (garante que o XML esta no lugar mesmo sem rodar `copy-systemroms.sh` antes)
+
+### Aprendizado tecnico
+
+- O openMSX identifica ROMs por SHA1, nao por nome de arquivo
+- Para adicionar suporte a um ROM novo, basta criar um `.xml` de extensao com os SHA1 do arquivo
+- O caminho de extensoes do usuario no **Flatpak** e `~/.openMSX/share/extensions/` — diferente do caminho de ROMs (`~/.var/app/.../data/share/openmsx/systemroms/`)
+
+### Resultado
+
+- Emulador carrega o ROM `Nextor-2.1.4.SunriseIDE.blueMSX.rom` corretamente
+- MSX boota com kernel Nextor 2.1.4 no slot de extensao
+
+---
+
+## Fase 10 — Floppy vazio: eliminando "not ready reading drive A:"
+
+### Problema: FS-A1GT tem drive de disquete interno mapeado como A:
+
+Com o Nextor ROM carregado (Fase 9 resolvida), o emulador agora inicializava o Nextor corretamente — mas exibia imediatamente:
+
+```
+Not ready reading drive A:
+Abort, Retry, Ignore?
+```
+
+**Causa**: O Panasonic FS-A1GT tem um drive de disquete interno. O Nextor mapeia este drive como A:. Sem nenhuma imagem de disquete montada, o hardware reporta "Not ready". O Nextor exige interacao do usuario (pressionar I para Ignore) antes de continuar pelo HDD.
+
+**Tentativa 1 (falhou)**: Adicionar `diskmanipulator create` ao `init-fullscreen.tcl`. O Flatpak sandbox do openMSX nao tem acesso de escrita a `/tmp/` — o `catch` absorvia o erro silenciosamente, sem montar nada.
+
+### Solucao: criar floppy FAT12 vazio no HOST antes do openMSX iniciar
+
+O arquivo e criado via Python no **host** (antes do sandbox Flatpak), salvo em `~/MSX/media/msxair-empty-floppy.dsk`, e passado via `-diska` na linha de comando — caminho que o Flatpak ja tem acesso (mesma pasta do HDD).
+
+### Arquivos modificados
+
+1. `src/launch-msxair.sh`
+   - Cria `~/MSX/media/msxair-empty-floppy.dsk` (FAT12 720KB) via Python inline antes de iniciar o openMSX
+   - Adiciona `-diska "${EMPTY_FLOPPY}"` aos args do openMSX (apenas se `AUTOSTART_DSK` nao estiver definido)
+   - Se o usuario definiu `AUTOSTART_DSK`, o disco do usuario e usado em A: normalmente
+
+2. `src/init-fullscreen.tcl`
+   - Revertido para apenas `set fullscreen on` (logica de floppy removida — nao funciona no Flatpak)
+
+### Formato do floppy vazio
+
+| Campo              | Valor        |
+|--------------------|-------------|
+| Tamanho            | 720KB (1440 setores)  |
+| Formato            | FAT12        |
+| Media byte         | 0xF9         |
+| Setores/trilha     | 9            |
+| Cabecas            | 2            |
+| FATs               | 2 (3 setores cada) |
+| Entradas root dir  | 112 (vazio)  |
+
+### Resultado
+
+- Nextor le drive A: sem erro (disco FAT12 montado)
+- Nao encontra COMMAND2.COM em A: (disco vazio)
+- Avanca automaticamente para C: (HDD, particao 1)
+- C:\COMMAND2.COM e executado → prompt `C:\>`
+- AUTOEXEC.BAT de C:\ roda: exibe versao do Nextor via NSYSVER
+
+---
+
+## Fase 11 — msxair-setup.sh: rebuild automatico do container Docker
+
+### Problema: rebuild Docker manual apos cada mudanca
+
+Apos o setup nativo, o usuario precisava rodar `./docker-build.sh` manualmente para que as mudancas (novos ROMs, nextor-ide.xml, etc.) fossem incluidas na imagem Docker.
+
+### Solucao: msxair-setup.sh recria o container automaticamente
+
+### Arquivos modificados
+
+1. `src/msxair-setup.sh`
+   - `launch-msxair.sh` removido do array `SETUP_SCRIPTS` (evita que o emulador bloqueie o resto do setup)
+   - Apos os scripts de setup, verifica se `docker` esta disponivel e executa `docker-build.sh` automaticamente
+   - Falha do Docker nao aborta o setup (o ambiente nativo ja esta configurado)
+   - Ao final, chama `launch-msxair.sh` explicitamente para iniciar o emulador
+
+### Fluxo completo de `msxair-setup.sh`
+
+```
+openmsx-install.sh
+  → nooverview-install.sh
+  → download-nextor-latest.sh  (soft-fail se sem internet)
+  → copy-systemroms.sh         (instala ROMs + nextor-ide.xml)
+  → setup-autostart.sh
+  → docker-build.sh            (se docker disponivel, soft-fail se falhar)
+  → launch-msxair.sh           (inicia o emulador)
+```
+
+### Resultado
+
+- Um unico `./src/msxair-setup.sh` configura o ambiente nativo E reconstroi a imagem Docker
+- Imagem Docker sempre sincronizada com os ultimos arquivos do projeto
 
 ---
 
