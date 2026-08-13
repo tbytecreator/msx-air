@@ -78,6 +78,7 @@ RUN chmod +x /opt/msxair/src/*.sh \
     && ln -sf /opt/msxair/src/systemroms /root/.local/share/openmsx/systemroms \
     && rm -rf /usr/share/openmsx/systemroms \
     && ln -sf /opt/msxair/src/systemroms /usr/share/openmsx/systemroms \
+    && cp /opt/msxair/src/nextor-ide.xml /usr/share/openmsx/extensions/nextor-ide.xml \
     && bash -n /opt/msxair/src/setup-autostart.sh \
     && python3 /opt/msxair/src/create-nextor-hdd.py /root/MSX/media/msxair-hdd.dsk /opt/msxair/src/nextor-boot-files
 

@@ -21,8 +21,7 @@ after time 2 {
     puts "==========================================="
     puts " MSX Air - Criando imagem HDD com Nextor"
     puts "==========================================="
-    puts ""
-    puts "Imagem HDD: $hdd_image"
+    puts ""    puts "Nextor: 2.1.4 (ROM) / 2.1.3 (NEXTOR.SYS)"    puts "Imagem HDD: $hdd_image"
     puts "Diretorio Nextor: $nextor_dir"
     puts ""
 
@@ -62,7 +61,7 @@ after time 2 {
         DELALL.COM DEVINFO.COM DRIVERS.COM DRVINFO.COM
         FASTOUT.COM LOCK.COM MAPDRV.COM EMUFILE.COM
         RALLOC.COM Z80MODE.COM NSYSVER.COM NEXBOOT.COM
-        CONCLUS.COM
+        CONCLUS.COM EPTCFT.COM
     }
 
     foreach f $tool_files {
@@ -81,10 +80,11 @@ after time 2 {
     set autoexec_path "$nextor_dir/../AUTOEXEC.BAT"
     set fd [open $autoexec_path w]
     puts $fd "ECHO."
-    puts $fd "ECHO  ** MSX Air - Nextor 2.1.0 **"
-    puts $fd "ECHO  ** Bem-vindo ao disco rigido virtual **"
+    puts $fd "ECHO  MSX Air - Nextor 2.1.4"
     puts $fd "ECHO."
     puts $fd "SET PATH=A:\\TOOLS"
+    puts $fd "A:\\TOOLS\\NSYSVER"
+    puts $fd "ECHO."
     close $fd
 
     diskmanipulator import hda1 $autoexec_path

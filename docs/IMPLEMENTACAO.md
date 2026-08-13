@@ -326,7 +326,8 @@ msxair-hdd.dsk (96MB)
 │       ├── Z80MODE.COM
 │       ├── NSYSVER.COM
 │       ├── NEXBOOT.COM
-│       └── CONCLUS.COM
+│       ├── CONCLUS.COM
+│       └── EPTCFT.COM
 ├── Particao 2 - MSXAIR P2 (32MB, FAT16, vazia)
 └── Particao 3 - MSXAIR P3 (32MB, FAT16, vazia)
 ```
@@ -356,6 +357,77 @@ openmsx -machine Panasonic_FS-A1GT -ext ide -hda ~/MSX/media/msxair-hdd.dsk
 - Nomes de extensao do openMSX podem variar por versao/pacote. Valide com `openmsx -ext list`.
 - Todos os mapeamentos de dispositivo em `dockerrun.sh` sao condicionais: o script funciona em hosts com e sem os dispositivos.
 - GNOME Extension Manager pode ser instalada para gerenciamento manual de extensoes caso instalacao automatica falhe.
+
+## Proxima etapa sugerida
+
+---
+
+## Fase 8 — Atualizacao para Nextor 2.1.4
+
+### Problema: arquivos Nextor desatualizados (2.1.0)
+
+O projeto usava Nextor 2.1.0 (lancado em 2020). A versao mais recente e 2.1.4 (novembro de 2025), com correcoes importantes de bugs:
+- Correcao no calculo do tamanho do diretorio raiz (#158)
+- Correcao no scan de teclas para mudanca de disco em modo de emulacao de floppy (#161)
+- NEXTOR.SYS v2.1.3: correcao no _GETCLUS, suporte a long integers em printf
+- MAPDRV.COM e EPTCFT.COM v2.1.2 (EPTCFT e ferramenta nova para corrigir tipos de particao estendida)
+
+A ROM para emuladores foi renomeada: `SunriseIDE.emulators.ROM` passou a ser `SunriseIDE.blueMSX.ROM` a partir da v2.1.2.
+
+### Solucao: script de download + atualizacao de todos os scripts
+
+### Arquivos criados
+
+1. `src/download-nextor-latest.sh` — novo script
+   - Baixa `Nextor-2.1.4.SunriseIDE.blueMSX.rom` para `systemroms/extensions/`
+   - Baixa `NEXTOR.SYS` v2.1.3 para `nextor-boot-files/`
+   - Baixa `MAPDRV.COM` e `EPTCFT.COM` v2.1.2 para `nextor-boot-files/`
+   - Suporta `--force` para re-download
+   - Saida com exit 0 mesmo em falha de rede (soft-fail), apenas avisa
+
+### Arquivos modificados
+
+1. `src/create-nextor-hdd.py`
+   - `EPTCFT.COM` adicionado a lista `tool_files` (14 ferramentas no total)
+   - AUTOEXEC.BAT atualizado: menciona Nextor 2.1.4 e chama `A:\TOOLS\NSYSVER` para exibir a versao real ao boot
+
+2. `src/create-hdd.tcl`
+   - `EPTCFT.COM` adicionado ao bloco de ferramentas
+   - AUTOEXEC.BAT atualizado para versao 2.1.4 com chamada ao NSYSVER
+   - Banner de criacao atualizado
+
+3. `src/create-hdd-image.sh`
+   - `NEXTOR_ROM_URL` atualizado para `Nextor-2.1.4.SunriseIDE.blueMSX.ROM`
+   - Variavel `NEXTOR_ROM_FILENAME` com novo nome do arquivo
+   - Funcao `install_nextor_rom()` atualizada
+
+4. `src/launch-msxair.sh`
+   - Funcao `setup_sunrise_ide()` chama `download-nextor-latest.sh` antes de criar a imagem HDD
+   - Falha do download nao impede a criacao (usa arquivos existentes como fallback)
+
+5. `src/msxair-setup.sh`
+   - `download-nextor-latest.sh` inserido na sequencia de setup entre `nooverview-install.sh` e `copy-systemroms.sh`
+   - Tratado como passo opcional: falha de rede nao aborta o setup
+
+### Mapeamento de versoes por arquivo
+
+| Arquivo | Versao | Release de origem |
+|---|---|---|
+| `Nextor-2.1.4.SunriseIDE.blueMSX.rom` | 2.1.4 | v2.1.4 |
+| `NEXTOR.SYS` | 2.1.3 | v2.1.3 |
+| `MAPDRV.COM` | 2.1.2 | v2.1.2 |
+| `EPTCFT.COM` | 2.1.2 | v2.1.2 (novo) |
+| Demais ferramentas | 2.1.0 | v2.1.0 (sem alteracoes) |
+| `COMMAND2.COM`, `MSXDOS.SYS`, `COMMAND.COM` | 2.1.0 | v2.1.0 (sem alteracoes) |
+
+### Resultado
+
+- Emulador inicia com Nextor 2.1.4 funcional
+- AUTOEXEC.BAT exibe a versao real do Nextor via NSYSVER ao entrar no MSX-DOS
+- `download-nextor-latest.sh` pode ser re-executado a qualquer momento para atualizar
+- Setup automatico (`msxair-setup.sh`) baixa arquivos atualizados se houver internet
+
+---
 
 ## Proxima etapa sugerida
 

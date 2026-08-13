@@ -90,7 +90,14 @@ setup_sunrise_ide() {
   
   if [[ ! -f "${hdd_image}" ]]; then
     echo "[INFO] Preparando imagem de disco para Sunrise IDE..."
-    
+
+    # Garante arquivos Nextor mais recentes antes de criar a imagem
+    if [[ -f "${SCRIPT_DIR}/download-nextor-latest.sh" ]]; then
+      echo "[INFO] Verificando/baixando Nextor mais recente (2.1.4)..."
+      bash "${SCRIPT_DIR}/download-nextor-latest.sh" || \
+        echo "[WARN] Falha ao baixar Nextor mais recente, usando arquivos existentes."
+    fi
+
     if [[ -f "${SCRIPT_DIR}/create-nextor-hdd.py" ]]; then
       echo "[INFO] Criando imagem HDD com Nextor via create-nextor-hdd.py"
       python3 "${SCRIPT_DIR}/create-nextor-hdd.py" "${hdd_image}" "${nextor_dir}" <<< "s"
@@ -118,12 +125,15 @@ fi
 TCL_SCRIPT="${SCRIPT_DIR}/init-fullscreen.tcl"
 
 if [[ "${OPENMSX_CMD}" == *"flatpak"* ]]; then
-  # Para Flatpak, copiar o arquivo TCL para o sandbox de dados para garantir acesso
-  # O Flatpak tem acesso a ~/.var/app/org.openmsx.openMSX/data/
   FLATPAK_DATA_DIR="${HOME}/.var/app/org.openmsx.openMSX/data"
   mkdir -p "${FLATPAK_DATA_DIR}"
-  
-  # Copia o arquivo TCL para o sandbox
+
+  # Garante que nextor-ide.xml esta no diretorio de extensoes do usuario do Flatpak
+  if [[ -f "${SCRIPT_DIR}/nextor-ide.xml" ]]; then
+    mkdir -p "${HOME}/.openMSX/share/extensions"
+    cp -f "${SCRIPT_DIR}/nextor-ide.xml" "${HOME}/.openMSX/share/extensions/nextor-ide.xml"
+  fi
+
   if [[ -f "${TCL_SCRIPT}" ]]; then
     cp -f "${TCL_SCRIPT}" "${FLATPAK_DATA_DIR}/init-fullscreen.tcl"
     TCL_SCRIPT="${FLATPAK_DATA_DIR}/init-fullscreen.tcl"
@@ -133,7 +143,6 @@ if [[ "${OPENMSX_CMD}" == *"flatpak"* ]]; then
     TCL_SCRIPT=""
   fi
 else
-  # Para nativo, usar o arquivo TCL direto
   if [[ ! -f "${TCL_SCRIPT}" ]]; then
     echo "[WARN] Script TCL nao encontrado: ${TCL_SCRIPT}. Iniciando sem fullscreen automatico."
     TCL_SCRIPT=""

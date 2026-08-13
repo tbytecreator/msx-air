@@ -25,11 +25,12 @@ Esta base cobre:
 **Disco rigido virtual (Sunrise IDE + Nextor):**
 
 - Imagem HDD de 96MB com 3 particoes FAT16 (32MB cada)
-- Nextor 2.1.0 pre-instalado (NEXTOR.SYS + COMMAND2.COM)
-- Ferramentas Nextor no diretorio TOOLS/ (MAPDRV, EMUFILE, DEVINFO, etc.)
+- Nextor 2.1.4 (ROM) / NEXTOR.SYS v2.1.3 instalado automaticamente
+- 14 ferramentas Nextor no diretorio TOOLS/ (inclui EPTCFT.COM v2.1.2)
+- Download automatico dos arquivos mais recentes via `download-nextor-latest.sh`
 - Criacao automatica no primeiro lancamento se extensao `ide` ativa
 - Script Python independente (`create-nextor-hdd.py`) — nao depende do openMSX
-- AUTOEXEC.BAT configurado com PATH para ferramentas
+- AUTOEXEC.BAT exibe versao do Nextor via NSYSVER ao iniciar
 
 **Execucao:**
 

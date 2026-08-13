@@ -38,13 +38,14 @@ chmod +x src/*.sh dockerrun.sh
 ./src/msxair-setup.sh
 ```
 
-Este script executa os 5 passos abaixo em sequencia:
+Este script executa os 6 passos abaixo em sequencia:
 
-1. `install-host-deps.sh` — Instala dependências SDL2, ALSA, OpenGL
-2. `openmsx-install.sh` — Instala OpenMSX nativo ou Flatpak
-3. `nooverview-install.sh` — Instala extensão GNOME (optional, pula se nao-GNOME)
-4. `copy-systemroms.sh` — Copia system ROMs para o local correto
-5. `setup-autostart.sh` — Configura autostart no systemd (optional)
+1. `openmsx-install.sh` — Instala OpenMSX nativo ou Flatpak
+2. `nooverview-install.sh` — Instala extensao GNOME (opcional, pula se nao-GNOME)
+3. `download-nextor-latest.sh` — Baixa arquivos Nextor 2.1.4 do GitHub (opcional, pula se sem internet)
+4. `copy-systemroms.sh` — Copia system ROMs (incluindo ROM Nextor 2.1.4) para o local correto
+5. `setup-autostart.sh` — Configura autostart no systemd (opcional)
+6. `launch-msxair.sh` — Inicia o emulador (cria HDD se necessario)
 
 ### Opcao B: Setup manual (passo a passo)
 
@@ -101,18 +102,22 @@ Edite `src/msxair.conf`:
 
 #### 6) Criar imagem de disco rigido (Sunrise IDE + Nextor)
 
-A imagem HDD e criada automaticamente na primeira execucao do `launch-msxair.sh` se a extensao `ide` estiver ativa. Para criar manualmente:
+A imagem HDD e criada automaticamente na primeira execucao do `launch-msxair.sh` se a extensao `ide` estiver ativa. Antes de criar a imagem, o launcher tenta baixar os arquivos Nextor mais recentes (requer internet). Para criar manualmente:
 
 ```bash
+# Baixar arquivos Nextor 2.1.4 (recomendado antes de criar o HDD)
+./src/download-nextor-latest.sh
+
+# Criar a imagem HDD
 python3 src/create-nextor-hdd.py ~/MSX/media/msxair-hdd.dsk src/nextor-boot-files/
 ```
 
-A imagem contém:
+A imagem contem:
 
 - 3 particoes FAT16 de 32MB (96MB total)
-- Nextor 2.1.0 (NEXTOR.SYS + COMMAND2.COM) na particao 1
-- Ferramentas Nextor no diretorio TOOLS/
-- AUTOEXEC.BAT configurado
+- Nextor 2.1.4 / NEXTOR.SYS v2.1.3 + COMMAND2.COM na particao 1
+- AUTOEXEC.BAT que configura PATH e exibe a versao do Nextor via `NSYSVER`
+- 14 ferramentas no diretorio TOOLS/ (inclui EPTCFT.COM v2.1.2)
 
 #### 7) Iniciar emulador
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # create-hdd-image.sh
-# Cria uma imagem de HDD com Nextor 2.1.0 para uso com a extensão Sunrise IDE
+# Cria uma imagem de HDD com Nextor 2.1.4 para uso com a extensão Sunrise IDE
 # no OpenMSX (projeto MSX Air).
 #
 # A imagem é criada com 3 partições FAT16 de 32MB cada e contém:
@@ -28,7 +28,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HDD_IMAGE="${1:-${HOME}/MSX/media/msxair-hdd.dsk}"
 NEXTOR_TOOLS_DIR="${SCRIPT_DIR}/nextor-boot-files"
 NEXTOR_TOOLS_URL="https://github.com/Konamiman/Nextor/releases/download/v2.1.0/tools.dsk.zip"
-NEXTOR_ROM_URL="https://github.com/Konamiman/Nextor/releases/download/v2.1.0/Nextor-2.1.0.SunriseIDE.emulators.ROM"
+NEXTOR_ROM_URL="https://github.com/Konamiman/Nextor/releases/download/v2.1.4/Nextor-2.1.4.SunriseIDE.blueMSX.ROM"
+NEXTOR_ROM_FILENAME="Nextor-2.1.4.SunriseIDE.blueMSX.rom"
 TCL_SCRIPT="${SCRIPT_DIR}/create-hdd.tcl"
 
 # --- Detecta openMSX ---
@@ -71,7 +72,7 @@ prepare_nextor_files() {
     return 0
   fi
 
-  echo "[INFO] Baixando ferramentas do Nextor v2.1.0..."
+  echo "[INFO] Baixando ferramentas do Nextor v2.1.0 (base tools, sem alteracoes desde 2.1.0)..."
   local tmp_dir
   tmp_dir="$(mktemp -d)"
   trap "rm -rf '${tmp_dir}'" EXIT
@@ -161,16 +162,19 @@ PYEOF
   echo "[INFO] Arquivos de boot extraidos para ${NEXTOR_TOOLS_DIR}"
 }
 
-# --- Instala a ROM do Nextor 2.1.0 para emuladores (se necessário) ---
+# --- Instala a ROM do Nextor 2.1.4 para emuladores (se necessário) ---
 install_nextor_rom() {
-  local rom_dest="${SCRIPT_DIR}/systemroms/extensions/Nextor-2.1.0.SunriseIDE.emulators.rom"
+  local rom_dest="${SCRIPT_DIR}/systemroms/extensions/${NEXTOR_ROM_FILENAME}"
   if [[ -f "${rom_dest}" ]]; then
-    echo "[INFO] ROM Nextor 2.1.0 para emuladores já instalada."
+    echo "[INFO] ROM Nextor 2.1.4 para emuladores ja instalada."
     return 0
   fi
 
-  echo "[INFO] Baixando ROM Nextor 2.1.0 para emuladores..."
-  curl -sL -o "${rom_dest}" "${NEXTOR_ROM_URL}"
+  echo "[INFO] Baixando ROM Nextor 2.1.4 para emuladores (SunriseIDE/openMSX)..."
+  if ! curl -sL --fail -o "${rom_dest}" "${NEXTOR_ROM_URL}"; then
+    echo "[ERRO] Falha ao baixar ROM Nextor 2.1.4. Verifique a conexao." >&2
+    return 1
+  fi
   echo "[INFO] ROM instalada em ${rom_dest}"
 }
 
@@ -223,7 +227,7 @@ echo ""
 echo "╔══════════════════════════════════════════╗"
 echo "║  MSX Air - Criador de Imagem HDD Nextor ║"
 echo "╠══════════════════════════════════════════╣"
-echo "║ Nextor 2.1.0 + Sunrise IDE              ║"
+echo "║ Nextor 2.1.4 + Sunrise IDE              ║"
 echo "║ 3 particoes FAT16 x 32MB = 96MB         ║"
 echo "╚══════════════════════════════════════════╝"
 echo ""

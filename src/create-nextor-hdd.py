@@ -416,7 +416,7 @@ def create_hdd_image(output_path, nextor_files_dir=None):
                 'DELALL.COM', 'DEVINFO.COM', 'DRIVERS.COM', 'DRVINFO.COM',
                 'FASTOUT.COM', 'LOCK.COM', 'MAPDRV.COM', 'EMUFILE.COM',
                 'RALLOC.COM', 'Z80MODE.COM', 'NSYSVER.COM', 'NEXBOOT.COM',
-                'CONCLUS.COM'
+                'CONCLUS.COM', 'EPTCFT.COM'
             ]
 
             file_data_list = []
@@ -431,7 +431,14 @@ def create_hdd_image(output_path, nextor_files_dir=None):
                     print(f"    -> {fname} ({len(data)} bytes)")
 
             # AUTOEXEC.BAT
-            autoexec = b"ECHO.\r\nECHO  ** MSX Air - Nextor 2.1.0 **\r\nECHO  ** Disco rigido virtual **\r\nECHO.\r\nSET PATH=A:\\TOOLS\r\n"
+            autoexec = (
+                b"ECHO.\r\n"
+                b"ECHO  MSX Air - Nextor 2.1.4\r\n"
+                b"ECHO.\r\n"
+                b"SET PATH=A:\\TOOLS\r\n"
+                b"A:\\TOOLS\\NSYSVER\r\n"
+                b"ECHO.\r\n"
+            )
             file_data_list.append(('AUTOEXEC.BAT', autoexec, False))
             print(f"    -> AUTOEXEC.BAT ({len(autoexec)} bytes)")
 
@@ -475,7 +482,7 @@ def main():
     print("╔══════════════════════════════════════════╗")
     print("║  MSX Air - Criador de Imagem HDD Nextor ║")
     print("╠══════════════════════════════════════════╣")
-    print("║ Nextor 2.1.0 + Sunrise IDE (FAT16)      ║")
+    print("║ Nextor 2.1.4 + Sunrise IDE (FAT16)      ║")
     print("║ 3 particoes x 32MB = 96MB                ║")
     print("╚══════════════════════════════════════════╝")
     print()
@@ -497,6 +504,7 @@ def main():
     print(f"  Arquivo: {output_path}")
     print(f"  Tamanho: {total_size // (1024*1024)} MB")
     print()
+    print("  Nextor: 2.1.4 (ROM) / 2.1.3 (NEXTOR.SYS) / 2.1.2 (MAPDRV, EPTCFT)")
     print("  Estrutura:")
     print("    Particao 1 (32MB): NEXTOR.SYS + COMMAND2.COM + TOOLS/")
     print("    Particao 2 (32MB): vazia (uso geral)")

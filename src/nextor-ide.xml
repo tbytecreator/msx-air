@@ -1,0 +1,51 @@
+<?xml version="1.0" ?>
+<!DOCTYPE msxconfig SYSTEM 'msxconfig2.dtd'>
+<!--
+  nextor-ide.xml — Extensão personalizada para Sunrise ATA-IDE com Nextor.
+
+  O ide.xml padrão do openMSX só aceita os SHA1 do Sunrise IDE clássico
+  (ide240.dat / ide250.dat), que NÃO incluem o kernel Nextor.
+  Este arquivo especifica os SHA1 dos ROMs Nextor para Sunrise IDE,
+  garantindo que o openMSX carregue o Nextor e não o DOS padrão.
+
+  SHA1s aceitos (ordem de preferência):
+    fe5763bce942349df1a8ee74f3b98c0ab1061a85  Nextor-2.1.4.SunriseIDE.blueMSX.rom
+    97094d5ed206088c8f455801b7609e614c243562  Nextor-2.1.0.SunriseIDE.emulators.rom
+    61cba1680ac6cb448dc3e8c710a43f4e7ab49457  Nextor-2.0.1.SunriseIDE.rom
+    ab1d6dc0cb851c0ca15b260674ad884d0b8d85fb  Nextor-2.0.SunriseIDE.rom
+-->
+<msxconfig>
+  <info>
+    <name>Sunrise ATA-IDE with Nextor</name>
+    <manufacturer>Sunrise/Konamiman</manufacturer>
+    <code/>
+    <release_year>2020</release_year>
+    <description>ATA-IDE interface with Nextor kernel. Use with msxair-hdd.dsk.</description>
+    <type>external hard disk</type>
+  </info>
+  <devices>
+    <primary slot="any">
+      <secondary slot="any">
+        <SunriseIDE id="Sunrise IDE">
+          <mem base="0x0000" size="0x10000"/>
+          <rom>
+            <sha1>fe5763bce942349df1a8ee74f3b98c0ab1061a85</sha1> <!-- Nextor 2.1.4 SunriseIDE.blueMSX -->
+            <sha1>97094d5ed206088c8f455801b7609e614c243562</sha1> <!-- Nextor 2.1.0 SunriseIDE.emulators -->
+            <sha1>61cba1680ac6cb448dc3e8c710a43f4e7ab49457</sha1> <!-- Nextor 2.0.1 SunriseIDE -->
+            <sha1>ab1d6dc0cb851c0ca15b260674ad884d0b8d85fb</sha1> <!-- Nextor 2.0 SunriseIDE -->
+          </rom>
+          <master>
+            <type>IDEHD</type>
+            <filename>hd.dsk</filename>
+            <size>100</size>
+            <name>openMSX harddisk</name>
+          </master>
+          <slave>
+            <type>IDECDROM</type>
+            <name>openMSX CD-ROM</name>
+          </slave>
+        </SunriseIDE>
+      </secondary>
+    </primary>
+  </devices>
+</msxconfig>

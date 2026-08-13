@@ -18,7 +18,7 @@ Fornecer um ambiente de testes em container para a base do projeto MSX Air usand
 4. Adiciona `root` ao grupo `audio`
 5. Copia `src/`, `docs/`, `msxair.md` e `openmsx-install.sh` para `/opt/msxair`
 6. Copia o conteudo de `src/systemroms` para o file pool de system ROMs do openMSX em `/usr/share/openmsx/systemroms`
-7. Gera imagem HDD com Nextor 2.1.0 via `create-nextor-hdd.py` (3 particoes FAT16, 96MB)
+7. Gera imagem HDD com Nextor 2.1.4 via `create-nextor-hdd.py` (3 particoes FAT16, 96MB)
 8. Ajusta permissoes de execucao dos scripts
 9. Cria o diretorio `/root/MSX/media`
 10. Valida sintaxe Bash de todos os scripts durante o build

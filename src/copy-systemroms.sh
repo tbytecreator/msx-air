@@ -67,6 +67,15 @@ elif command -v flatpak >/dev/null 2>&1 && flatpak list --app 2>/dev/null | grep
   log "Copiando system ROMs de ${SYSTEMROMS_SRC} para ${SYSTEMROMS_DEST}"
   cp -av "${SYSTEMROMS_SRC}"/* "${SYSTEMROMS_DEST}/"
   
+  # Instala a extensao nextor-ide.xml no diretorio de extensoes do Flatpak
+  # O Flatpak busca extensoes em ~/.openMSX/share/extensions/ (nao em ~/.var/app/.../data/)
+  flatpak_ext_dir="${HOME}/.openMSX/share/extensions"
+  if [[ -f "${SCRIPT_DIR}/nextor-ide.xml" ]]; then
+    mkdir -p "${flatpak_ext_dir}"
+    cp "${SCRIPT_DIR}/nextor-ide.xml" "${flatpak_ext_dir}/nextor-ide.xml"
+    log "Extensao nextor-ide instalada em ${flatpak_ext_dir}"
+  fi
+  
   log "System ROMs copiadas com sucesso!"
   
 elif command -v openmsx >/dev/null 2>&1; then
@@ -108,7 +117,20 @@ elif command -v openmsx >/dev/null 2>&1; then
   
   log "Copiando system ROMs de ${SYSTEMROMS_SRC} para ${SYSTEMROMS_DEST}"
   cp -av "${SYSTEMROMS_SRC}"/* "${SYSTEMROMS_DEST}/"
-  
+
+  # Instala nextor-ide.xml no diretorio de extensoes do openMSX nativo
+  if [[ -f "${SCRIPT_DIR}/nextor-ide.xml" ]]; then
+    native_ext_dir=""
+    if [[ -w "/usr/share/openmsx/extensions" ]]; then
+      native_ext_dir="/usr/share/openmsx/extensions"
+    else
+      native_ext_dir="${HOME}/.local/share/openmsx/extensions"
+    fi
+    mkdir -p "${native_ext_dir}"
+    cp "${SCRIPT_DIR}/nextor-ide.xml" "${native_ext_dir}/nextor-ide.xml"
+    log "Extensao nextor-ide instalada em ${native_ext_dir}"
+  fi
+
   log "System ROMs copiadas com sucesso!"
   
 else
