@@ -98,9 +98,15 @@ setup_sunrise_ide() {
         echo "[WARN] Falha ao baixar Nextor mais recente, usando arquivos existentes."
     fi
 
+    if [[ -f "${SCRIPT_DIR}/download-hdd-software.sh" ]]; then
+      echo "[INFO] Verificando/baixando TED e SofaRun para o HD..."
+      bash "${SCRIPT_DIR}/download-hdd-software.sh" || \
+        echo "[WARN] Falha ao baixar TED/SofaRun, o HD sera criado sem eles."
+    fi
+
     if [[ -f "${SCRIPT_DIR}/create-nextor-hdd.py" ]]; then
       echo "[INFO] Criando imagem HDD com Nextor via create-nextor-hdd.py"
-      python3 "${SCRIPT_DIR}/create-nextor-hdd.py" "${hdd_image}" "${nextor_dir}" <<< "s"
+      python3 "${SCRIPT_DIR}/create-nextor-hdd.py" "${hdd_image}" "${nextor_dir}" "${MEDIA_DIR}" "${SCRIPT_DIR}/hdd-software" <<< "s"
     else
       echo "[ERROR] Script create-nextor-hdd.py nao encontrado em ${SCRIPT_DIR}" >&2
       echo "[ERROR] Execute a partir do diretorio src/ do projeto MSX Air." >&2

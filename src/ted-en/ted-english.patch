@@ -1,0 +1,570 @@
+--- a/OFFSET.MAC
++++ b/OFFSET.MAC
+@@ -20,7 +20,15 @@
+ nl              equ 0                   ;Language id: Dutch
+ duits           equ 1                   ;Language id: German
+ 
+-taal            equ nl                  ;Active UI language at assemble time
++engels          equ 2                   ;Language id: English
++
++taal            equ engels              ;Active UI language at assemble time
++
++iff taal-engels
++yesKey          equ 'Y'                 ;Key for "yes" in English prompts
++else
++yesKey          equ 'J'
++endIf
+ 
+ iff taal-nl
+ cryptByte       equ 01101011B           ;XOR mask used to obfuscate strings (NL build)
+--- a/MAIN.MAC
++++ b/MAIN.MAC
+@@ -4275,7 +4275,7 @@
+                 LD HL,RECLEN
+                 LD E,(IY+MINLIN)
+                 LD D,22
+-                CP 'K'                  ;Record (kaart) length
++                CP 'R'                  ;Record (kaart) length
+                 JR Z,SI3
+                 INC E
+                 INC E
+@@ -4305,16 +4305,16 @@
+                 OR A
+                 JR NZ,SI4               ;Number 0 entered
+                 LD A,B                  ;Fetch choice
+-                CP 'K'
+-                JP Z,SI1                ;For 'K' zero is not allowed
++                CP 'R'
++                JP Z,SI1                ;For 'R' zero is not allowed
+                 XOR A
+ SI4:            LD (HL),A
+ SI5:            LD A,B
+-                CP 'K'                  ;Field A, B, or C?
++                CP 'R'                  ;Field A, B, or C?
+                 JP Z,SI1                ; No, => Done
+                 LD A,48
+                 LD (CSRX),A
+-                LD B,'K'
++                LD B,'R'
+                 INC HL
+                 INC HL                  ; Yes, => fill in column
+                 JR SI3B
+@@ -5077,7 +5077,7 @@
+ IH4A:           CALL INKCRL             ;Read keypress
+                 CP 'N'
+                 JR Z,IH5
+-                CP 'J'
++                CP yesKey
+                 JR NZ,IH4A
+                 POP BC
+                 LD B,5*16               ;BC=Max number of files
+@@ -5234,7 +5234,7 @@
+ IH19:           CALL INKCRL             ;Read keypress
+                 CP 'N'
+                 JP Z,IH5B
+-                CP 'J'
++                CP yesKey
+                 JR NZ,IH19
+                 BIT DOS2,(IY-FLAGS5)
+                 JR Z,IH19B
+@@ -6780,7 +6780,7 @@
+                 CP 'N'
+                 SCF
+                 RET Z                   ;C-flag set
+-                CP 'J'
++                CP yesKey
+                 JR NZ,ZEK3
+                 RET
+ 
+@@ -7424,6 +7424,12 @@
+                 ds 68
+ endif
+ 
++if              TAAL eq ENGELS
++voetTxt:        db 8
++                db 'Page: $P'          ;Page number in the footer
++                ds 70
++endif
++
+ if              TAAL eq DUITS
+ voetTxt:        db 9
+                 db 'Seite: $P'          ;Page number in the footer
+@@ -7459,6 +7465,18 @@
+ db ' Hoofd <=> Kleine letter: GRAPH-links/rechts       Hulpregel : F3/S/S         9 '
+ endif
+ 
++if              TAAL eq ENGELS
++tHelp:
++db ' Format paragraph       : HOME          To end of line       : CTRL-right     G '
++db ' Format from cursor     : CTRL-HOME     To start of line     : CTRL-left      I '
++db ' Indent paragraph       : SHIFT-HOME    To next word         : SHIFT-right    R '
++db ' Center line            : GRAPH-HOME    To previous word     : SHIFT-left     O '
++db ' Delete line            : CTRL-DEL      To next page         : SHIFT-down     6 '
++db ' Delete to end of line  : SHIFT-DEL     To previous page     : SHIFT-up       9 '
++db ' Cassette motor on/off  : STOP          Text before left mar.: SHIFT-TAB      8 '
++db ' Upper <=> lower case   : GRAPH-left/right         Help line : F3/S/S         9 '
++endif
++
+ if              TAAL eq DUITS
+ tHelp:
+ db ' Absatz formattieren     : HOME        Zum Ende der Zeile   : CTRL-rechts       '
+@@ -7497,13 +7515,21 @@
+ 
+                 ;40 bytes of user-name
+ 
++   if           TAAL eq ENGELS
++tName:          db 14                   ;Length byte
++                irpc X,<deretsiger toN>
++                  db '&X' xor cryptByte
++                endm                    ;Decoded contents: 'Not registered'
++                ds 40 - 14
++   endif
+    if           TAAL eq NL
+ tName:          db 18                   ;Length byte
+                 irpc X,<dreertsigereg teiN>
+                   db '&X' xor cryptByte ;XOR every character with the crypt byte
+                 endm                    ;Decoded contents: 'Niet geregistreerd'
+                 ds 40 - 18              ;Reserve another 40-17 bytes
+-   else
++   endif
++   if           TAAL eq DUITS
+ tName:          db 17                   ;Length byte
+                 irpc X,<treirtsiger thciN>
+                   db '&X' xor cryptByte ;XOR every character with the crypt byte
+--- a/SUBTED.MAC
++++ b/SUBTED.MAC
+@@ -1024,7 +1024,7 @@
+ VERV1:          CALL INKCRL             ;Also ^J or ^N
+                 CP 'N'
+                 RET Z
+-                CP 'J'
++                CP yesKey
+                 JR NZ,VERV1
+ VERV1B:         LD A,(ZOEKBUF)          ;Get length
+                 LD B,A
+@@ -3053,7 +3053,7 @@
+                 LD DE,TPROB
+                 CALL STROUT             ;Try again? (y/n)
+ DSE2:           CALL INKCRL             ;Wait for (ctrl) key
+-                CP 'J'
++                CP yesKey
+                 JR NZ,DSE3
+                 LD HL,TMOMENT
+                 CALL MESSAGE            ;One moment please...
+--- a/TEDSTR.MAC
++++ b/TEDSTR.MAC
+@@ -483,6 +483,414 @@
+ endif           ;End TAAL=Dutch
+ 
+ 
++if              TAAL eq ENGELS          ;TRUE if TAAL=English
++
++;English hot-key characters for the function keys
++
++;Function key 2
++
++F2KAR:          db 'l'                     ;
++                db 'r'                     ;
++                db 'g'                     ;
++                db 's'                     ;
++                db 'w'                     ;
++                db 't'                     ;
++                db 'm'                     ;
++                db 'p'                     ;
++                db 'o'                     ;
++                db 'd'                     ;
++                db 'v'                     ;
++                db 255                     ;Function key
++                db 0
++
++;Function key 3
++
++f3Kar:          db 'f'                     ;
++                db 'w'                     ;
++                db 'd'                     ;
++                db 'b'                     ;
++                db 'p'                     ;
++                db 'c'                     ;
++                db 'e'                     ;
++                db 'l'                     ;
++                db 's'                     ;
++                db 'h'                     ;
++                db 255                     ;Function key
++                db 0
++
++;Function key 4
++
++F4KAR:          db 'a'                     ;
++                db 'f'                     ;
++                db 's'                     ;
++                db 'l'                     ;
++                db 'g'                     ;
++                db 'p'                     ;
++                db 't'                     ;
++                db 255                     ;Function key
++                db 0
++
++;Function key 5
++
++f5Kar:          db 'b'                     ;
++                db 'e'                     ;
++                db 'u'                     ;
++                db 'c'                     ;
++                db 'w'                     ;
++                db 'm'                     ;
++                db 'p'                     ;
++                db 't'                     ;
++                db 'l'                     ;
++                db 's'                     ;
++                db 'i'                     ;
++                db 255                     ;Function key
++                db 0
++
++;F2/Tab
++
++tabKar:         db ESC                     ;ESCape
++                db 'm'                     ;
++                db 's'                     ;
++                db 'l'                     ;
++                db 0
++
++;F2/MemMap
++
++memKar:         db ESC                     ;ESCape
++                db 'm'                     ;
++                db 'v'                     ;
++                db 0
++
++;F2/Save settings
++
++insKar:         db ESC                     ;ESCape
++                db 'e'                     ;
++                db 't'                     ;
++                db 'f'                     ;
++                db 'l'                     ;
++                db 0
++
++;F3/Column
++
++kolKar:         db ESC                     ;ESCape
++                db 'n'                     ;
++                db 0
++
++;F3/Disk directory
++
++inhKar:         db ESC                     ;ESCape
++                db DOWN                    ;cursor key
++                db UP                      ;cursor key
++                db RIGHT                   ;cursor key
++                db LEFT                    ;cursor key
++                db 'd'                     ;
++                db 'l'                     ;
++                db 'b'                     ;
++                db 'w'                     ;
++                db 'm'                     ;
++                db 'c'                     ;
++                db 's'                     ;
++                db 0
++
++;F3/Page
++
++pageKar:        db ESC                     ;ESCape
++                db 'p'                     ;
++                db 'r'                     ;
++                db 'a'                     ;
++                db 'n'                     ;
++                db 's'                     ;
++                db 'b'                     ;
++                db 0
++
++;F3/Help
++
++hlpKar:         db ESC                     ;ESCape
++                db 't'                     ;
++                db 'm'                     ;
++                db 0
++
++;F2/Printer settings
++
++PRTKAR:         db ESC                     ;ESCape
++                db 's'                     ;
++                db 't'                     ;
++                db 'b'                     ;
++                db 'l'                     ;
++                db '1'                     ;
++                db '2'                     ;
++                db 'm'                     ;
++                db 'a'                     ;
++                db 'd'                     ;
++                db 'e'                     ;
++                db 'n'                     ;
++                db 'h'                     ;
++                db 'o'                     ;
++                db 'f'                     ;
++                db 'c'                     ;
++                db 'r'                     ;
++                db 'g'                     ;
++                db 'k'                     ;
++                db 'i'                     ;
++                db 0
++
++;Screen settings
++
++scrKar:         db ESC                     ;ESCape
++                db 's'                     ;
++                db 'c'                     ;
++                db 'b'                     ;
++                db 'z'                     ;
++                db 't'                     ;
++                db 'l'                     ;
++                db 'm'                     ;
++                db 'e'                     ;
++                db 'a'                     ;
++                db 'r'                     ;
++                db 'h'                     ;
++                db 'k'                     ;
++                db 'n'                     ;
++                db 'f'                     ;
++                db 0
++
++;F4/Go To
++
++goKar:          db ESC                     ;ESCape
++                db 'l'                     ;
++                db 't'                     ;
++                db 'b'                     ;
++                db 's'                     ;
++                db 'e'                     ;
++                db 0
++
++;F2/Paragraph settings
++
++ALIKAR:         db ESC                     ;ESCape
++                db 'j'                     ;
++                db 'h'                     ;
++                db 'i'                     ;
++                db 'c'                     ;
++                db 0
++
++;F5/Indent
++
++indKar:         db ESC                     ;ESCape
++                db 'n'                     ;Number of positions
++                db left                    ;
++                db right                   ;
++                db 0
++
++                ;Video-RAM addresses of on-screen texts/values
++
++VRMREG          equ 18                  ;Line number
++VRMKOL          equ 30                  ;Column number
++VRMPAG          equ 41                  ;Page number
++VRMTF7          equ 46                  ;'F7:Help' (help label)
++
++                ;Cursor positions of on-screen texts / values
++
++XYFNK           equ 3101H               ;F2/X etc
++XZOEK           equ 15                  ;Search-text field
++
++                ;On-screen texts
++
++if              DEMO
++
++TINTRO:         db cr
++                db 9,9,9,'  MSX2 Word Processor - Editor',cr,lf
++                db 9,9,9,9,'by M.J. Vriend',cr,lf
++                db 9,9,9,9,'(c) 1992 Jos-Tel',cr,lf
++                db 9,9,'   Demonstration version - copying allowed',cr,lf,lf,nul
++TGETNAME:
++TGETCODE:
++TACCESS:
++TGEBR:
++else
++TINTRO:         db cr
++                db 9,9,9,'  MSX2 Word Processor - Editor',cr,lf
++                db 9,9,9,9,'by M.J. Vriend',cr,lf
++                db 9,9,9,9,'(c) 1992 Jos-Tel',cr,lf
++                db 9,9,9,'   Copying  NOT  allowed',cr,lf,lf,nul
++
++TGETNAME:       db tab,tab,'Request your code from Jos-Tel!!',cr,lf,lf
++                db tab,tab,'User name: ',nul
++TGETCODE:       db cr,lf,tab,tab,'User code: ',nul
++TACCESS:        db cr,lf,tab,tab,'Access code: ',nul
++TGEBR:          db cr,lf,tab,'User: ',nul
++endif
++
++                ;Information ticker text
++
++KRTSTART:       db "              M.J. Vriend's TED "
++
++if              DEMO
++                db 'demonstration '
++endif
++                db 'version #2.65 (17 November 1992) '
++                db 'copyright (C) 1992 Jos-Tel Aktie M.S. '
++                db 'The proceeds of TED benefit '
++                db 'the Dutch Multiple Sclerosis Foundation. '
++if              DEMO
++                db 'Order the new TED #2.65 from Jos-Tel. '
++endif
++                db 'For more information call the Jos-Tel databank 05149-1837, '
++                db '24 hours a day online. Or write to Jos de Boer, Kampenspaed 4, 8721 GL  WARNS.'
++KRTEND:         db '                '
++TNOKRT:         db "MJV's TED v#2.6]"
++TF7:            db 'F7:Help '
++
++TSTATUS:        db 'Insert:ON    Line:       Col.:      Page:     '
++                db "F7:Help [MJV's TED v#2.6]  0.00:00"
++THULP0:         db ' F1/6=PgDn/PgUp  F2=Settings  F3=System  F4=Commands  F5=Block_functions        ',nul
++THULP2:         db ' Left/Right-mar. paraGraph Set/Wipe-Tab Memmap Printer-Driver sOrt saVe  ESCape '
++THULP3:         db ' Free Wipe Directory coLumn Page Colour Backup Extension Screen Help     ESCape '
++THULP4:         db ' Again-Find  Go_to  Print  Save/Load_text  0..9-mark  sTop               ESCape '
++THULP5:         db ' Begin End Undefine Copy Wipe Move Print sorT Indent Load Save           ESCape '
++
++TAAN:           db 'ON ',nul
++TUIT:           db 'OFF',nul
++TREGNR:         db '                        Go to line number: ',nul
++TLINKS:         db '                        Left margin: ',nul
++TRECHTS:        db '                        Right margin: ',nul
++TSELECTIE:      db '                        Selection - Filename: ',nul
++TPAD:           db ' Path:    ',nul
++TINH:           db ' <',17H,' ',17H,'>  Load  Block  Charset  Settings  Mail-Merge  Wipe  Directory  ESCape',nul
++TVRIJ:          db '-Free on A:       k.',nul
++TVOLUME:        db ' Diskname: ',nul
++TSAVEN:         db '                Save current text to disk? (y/n) ',nul
++tabCHR:         db tab,nul
++tDirChr:        db ' d',tab,nul
++
++TVLDERR:        db '                *** Field falls outside the record',nul
++TNOPB:          db '                *** No buffer present',nul
++TNEXTPG:        db '                *** Insert next page',nul
++TDRUK:          db ' *** - Press a key... ',nul
++
++TMOMENT:        db '                                *** One moment... *** ',nul
++TMEER:          db '                                Any more? (y/n) ',nul
++TZEKER:         db '                        Are you sure? (y/n) ',nul
++
++TMEMMAP:        db '                            use of the MM:                               ESCape',cr,lf
++                db '                             use of Vram: ',nul
++TKEUZE:         db '                                Make your choice: ',nul
++TtabCH:         db '            use tab characters in Memory:                                ESCape',cr,lf
++                db '             Save tab characters to disk:',cr,lf
++                db '           Load tab characters from disk:',nul
++xTabIns         equ 43
++
++tAlinea:        db '   Justify:     Hyphenate:           hyphen Char:        Indent:         ESCape',nul
++xUitvul         equ 13
++xAfbreek        equ 28
++xStreep         equ 51
++xInspr          equ 66
++
++tIndent:        db '                       Number of positions to shift:                     ESCape',cr,lf
++                db cr,lf
++                db '                        press <',17H,' or ',17H,'> to start',nul
++
++xAantPos        equ 54
++
++TSORT:          db '      Record length:     line(s)                                         ESCape',cr,lf
++                db cr,lf
++                db '           sort on A: field:           column:',cr,lf
++                db '                   B: field:           column:',cr,lf
++                db '                   C: field:           column:',nul
++TKOLOM:         db '                      Number of columns:                                 ESCape',lf,nul
++TKOLPOS:        db cr,lf,'                      column position ',nul
++tPage:          db '                        Place page-stop                                  ESCape',cr,lf
++                db '                        Remove current page-stop',cr,lf
++                db '                        remove All page-stops',cr,lf
++                db cr,lf
++                db '                            page-Number indication: ',cr,lf
++                db '                         page-Stop indication line: ',cr,lf
++                db '                     page-Boundary indication line: ',nul
++tGoto:          db '                  Go to:Top of text             Start of block           ESCape',cr,lf
++                db '                        Bottom of text          End of block',cr,lf
++                db '                        Line number             mark 0..9',nul
++TKLEUR:         db '                                    Blue   Red   Green                   ESCape',cr,lf
++                db '                   Text background:',cr,lf
++                db '                   Text foreground:',cr,lf
++                db '                 Cursor background:',cr,lf
++                db '                 Cursor foreground:',nul
++TEXT:           db '                         Default extension: ',nul
++TBACKUP:        db '                              Create Backup:                             ESCape',cr,lf
++                db cr,lf
++                db '                           Automatic saving:',cr,lf
++                db '                       number of keyStrokes:',nul
++TSCHERM:        db '                 cursor Colours:                  Edit mode:             ESCape',cr,lf
++                db '                   Block cursor:                Auto-indent:',cr,lf
++                db '          command bar on Screen:                 key Repeat:',cr,lf
++                db '         leading Zeros in clock:            blinKing cursor:',cr,lf
++                db '                         Ticker:       cursor blink time oN:',cr,lf
++                db '     Large letters in help menu:      cursor blink time oFf:',cr,lf
++                db cr,lf
++                db 'Msx char. set: ',cr,lf
++                db 'cHaracter set: ',nul
++TDRIVER:        db '                                Use driver:                              Return',nul
++TGETDRV:        db '             Type a character:                                           ESCape',nul
++TPRTINS:        db '  Setup string:                                                          ESCape',cr,lf
++                db '    Top margin:            first page Number:               header maRgin:',cr,lf
++                db ' Bottom margin:         Header line position:               footer marGin:',cr,lf
++                db '   page Length:         fOoter line position:                    Formfeed:',cr,lf
++                db '                                                      Continuous printing:',cr,lf
++                db ' 1:header and 2:footer line    ($p=page number)',cr,lf
++                db cr,lf
++                db cr,lf
++                db cr,lf
++                db '    Mail-merge:        Initial record:                       merge marKer:',cr,lf
++                db '     file nAme:',cr,lf
++                db '    recorD end:',cr,lf
++                db '     field End:',nul
++TPSTAT:         db '         Current line: 1          Last line: ',nul
++TKAART:         db 'Current record:',nul
++TPBEGON:        db '                        *** Printing started... ***',nul
++TMEM:           db '                Memory  kilobytes',cr,lf
++                db '                   total:',cr,lf
++                db '                    free: ',nul
++TAFBR:          db '    move with arrows: <',17H,' ',17H,'>  hyphenate: Return  wrap: Space              ESCape',nul
++TWIS:           db '                        wipe  Text                                       ESCape',cr,lf
++                db '                        clear Printer buffer',nul
++TCPHULP:        db '                        copy help to the Text                            ESCape',cr,lf
++                db '                        copy help to the Menu',nul
++TTOETS:         db '                        *** Press a key... *** ',nul
++
++TRECERR:        db '        *** End of record not found',nul
++TREGLEN:        db '                *** Line too long',nul
++TONDERB:        db '                *** Interrupted',nul
++TMEMVOL:        db '                *** Memory full',nul
++TTOMANY:        db '        *** Filename error or disk directory full',nul
++TDISKVOL:       db '                *** Disk full',nul
++TPROT:          db '        *** Disk write protected',nul
++TNODISK:        db '    *** No (good) disk present',nul
++TDSKERR:        db '                *** Disk error',nul
++TVERERR:        db '                *** Not a TED 2.6 file',nul
++TKARERR:        db '                *** Character set not found',nul
++TNOTFND:        db '                *** Not found',nul
++tPageTabFull:   db '                *** Page table full',nul
++tStkErr:        db '                *** Not enough stack memory',nul
++TPROB:          db ' ***  -  Retry? (y/n) ',nul
++TVERVANG:       db '                                Replace? (y/n) ',nul
++TSAVNAM:        db '                         Save - Name: ',nul
++TLOADNAM:       db '                         Load - Name: ',nul
++TSAVINS:        db '        save and load settings with Every text:                          ESCape',cr,lf
++                db cr,lf
++                db '        save current settings in Ted',cr,lf
++                db '        save current settings in a File',cr,lf
++                db '        Load settings from a file',nul
++TZOEK:          db ' Search   for:',cr,lf
++                db ' Replace with:',nul
++TZOEK2:         db ' F1:   NO  Case-sensitive search',cr,lf
++                db ' F2:   Forward search',cr,lf
++                db ' F3:   Conditional replace',cr,lf
++                db cr,lf
++                db ' Choose F1, F2 or F3, Return to start                                    ESCape',nul
++TWEL:           db 'YES ',nul
++TACHTER:        db ' Backward search',nul
++TONV:           db ' Unconditional replace',nul
++
++endif           ;End TAAL=English
++
++
+ if              TAAL eq DUITS           ;TRUE if TAAL=GERMAN
+ 
+                 ;German-language hot-key options for the function keys
