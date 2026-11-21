@@ -2,12 +2,20 @@
 set -euo pipefail
 
 image="${1:-msxair:bookworm}"
+unapi="${2:-1}"
+preconfigured="${3:-0}"
 
 docker run --rm -i \
   -e SDL_VIDEODRIVER=offscreen \
   -e SDL_AUDIODRIVER=dummy \
+  -e MSXAIR_UNAPI="$unapi" \
+  -e TEST_PRECONFIGURED_SMXWIFI="$preconfigured" \
   "$image" bash -s <<'SH'
 set -euo pipefail
+
+if [[ "$TEST_PRECONFIGURED_SMXWIFI" == 1 ]]; then
+  printf '\nEXTENSIONS=("nextor-ide" "smxwifi")\n' >> /opt/msxair/src/msxair.conf
+fi
 
 openmsx -v | grep -Fx 'openMSX 22.0'
 if ldd /usr/bin/openmsx | grep -q 'not found'; then
@@ -32,7 +40,11 @@ TCL
 
 timeout 90 /opt/msxair/src/launch-msxair.sh
 grep -Fx 'machine=Panasonic_FS-A1GT' /tmp/msxair-boot-check
-grep -Fx 'extensions=nextor-ide' /tmp/msxair-boot-check
+if [[ "$MSXAIR_UNAPI" == 1 ]]; then
+  grep -Fx 'extensions=nextor-ide smxwifi' /tmp/msxair-boot-check
+else
+  grep -Fx 'extensions=nextor-ide' /tmp/msxair-boot-check
+fi
 grep -Fx 'hdd=hda: /root/MSX/media/msxair-hdd.dsk' /tmp/msxair-boot-check
 grep -Fx 'floppy=diska: /root/MSX/media/msxair-empty-floppy.dsk' /tmp/msxair-boot-check
 SH

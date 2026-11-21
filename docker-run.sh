@@ -287,6 +287,7 @@ validate_and_install_dependencies
 
 # Inicializa o array com argumentos básicos
 DOCKER_RUN_ARGS=(--rm -it --privileged)
+DOCKER_RUN_ARGS+=(-e "MSXAIR_UNAPI=${MSXAIR_UNAPI:-1}")
 
 # Adiciona variáveis de environment para GPU rendering
 DOCKER_RUN_ARGS+=(-e "LIBGL_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri:/usr/lib/aarch64-linux-gnu/dri")

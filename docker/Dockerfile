@@ -22,9 +22,21 @@ RUN make -j2 OPENMSX_INSTALL=/usr INSTALL_SHARE_DIR=/usr/share/openmsx \
     && cp -L "$(g++ -print-file-name=libstdc++.so.6)" /openmsx-libs/ \
     && cp -L "$(gcc -print-file-name=libgcc_s.so.1)" /openmsx-libs/
 
+FROM openmsx-build AS unapi-assets
+RUN mkdir -p /unapi \
+    && curl -fsSL --retry 3 \
+        https://raw.githubusercontent.com/ducasp/MSX-Development/20fcedf1377b1ea3d1346e87e5bf7cc42ebe2c76/UNAPI_BIOS_CUSTOM_ESP_V2/ESPUNAPI_IO.rom \
+        -o /unapi/ESPUNAPI_IO.rom \
+    && echo '233ef8d636ae8e34038fc281972cd15b194c6affdca453d82339c2e125b73332  /unapi/ESPUNAPI_IO.rom' | sha256sum -c - \
+    && curl -fsSL --retry 3 \
+        https://raw.githubusercontent.com/ducasp/MSX-Development/0299d025a32bd3111171b2e7bfef7a87ae299304/UNAPI/HGET/hget.com \
+        -o /unapi/HGET.COM \
+    && echo '8fdc2bd28d8f2f8b675cd1602f431eb099f220a45c7343dc077fe45d41bb47f4  /unapi/HGET.COM' | sha256sum -c -
+
 FROM debian:bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV MSXAIR_UNAPI=1
 
 RUN apt-get update --fix-missing \
     && apt-get upgrade -y \
@@ -56,6 +68,7 @@ RUN apt-get update --fix-missing \
         libsdl2-gfx-1.0-0 \
         libglew2.2 \
         libxml2 \
+        libssl3 \
         zlib1g \
         libpng16-16 \
         libglew2.2 \
@@ -97,6 +110,10 @@ COPY src ./src
 COPY docs ./docs
 COPY msxair.md ./msxair.md
 COPY docker/entrypoint.sh ./entrypoint.sh
+
+# A ROM fica fora de src/systemroms, que pode ser montado somente para leitura.
+COPY --from=unapi-assets /unapi/ESPUNAPI_IO.rom /usr/share/openmsx/extensions/ESPUNAPI_IO.rom
+COPY --from=unapi-assets /unapi/HGET.COM /opt/msxair/src/hdd-software/UNAPI/HGET.COM
 
 RUN chmod +x /opt/msxair/src/*.sh \
     && chmod +x /opt/msxair/entrypoint.sh \

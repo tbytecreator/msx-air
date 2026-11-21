@@ -8,6 +8,49 @@ O openMSX 22.0 e compilado a partir da release oficial, cuja integridade e
 verificada por SHA-256. A compilacao ocorre em uma etapa separada da imagem
 final. A instalacao nativa ou via Flatpak no host nao e alterada.
 
+## Internet no MSX (TCP/IP UNAPI)
+
+No container, a extensao `smxwifi` e a BIOS UNAPI de Oduvaldo Pavan sao
+ativadas automaticamente. O openMSX emula a interface e o ESP32 e usa os
+sockets da rede do container; nao e necessario um ESP fisico, TAP, rede
+`--host` ou configuracao de Wi-Fi no MSX. A rede bridge padrao do Docker
+permite conexoes de saida atraves do host. TLS usa `libssl3` e os certificados
+do container. A emulacao nao oferece SSH UNAPI.
+
+A BIOS e o HGET 1.3 sao baixados do repositorio de Oduvaldo em revisoes fixas
+com SHA-256 verificado. Em HDDs novos, o cliente fica em `A:\UNAPI\HGET.COM`:
+
+```text
+A:\UNAPI\HGET https://example.com/ /l:EXAMPLE.HTM
+```
+
+O HGET 1.3 pode ficar repetindo a barra de progresso em respostas muito pequenas
+(por exemplo, 16 bytes); use outro cliente UNAPI para esses arquivos.
+
+Um HDD existente nao e alterado pela atualizacao e nao recebe o HGET
+automaticamente. Para importa-lo na raiz do HDD do host, encerre o emulador
+e use o importador existente:
+
+```bash
+( set -o noclobber; docker run --rm msxair:bookworm cat /opt/msxair/src/hdd-software/UNAPI/HGET.COM > HGET.COM ) \
+  && ./src/importar-hdd.sh HGET.COM
+```
+
+O comando nao sobrescreve `HGET.COM` no diretorio atual; escolha outro local
+se o arquivo ja existir. O importador nao sobrescreve arquivos e cria um backup. Depois, use
+`A:\HGET` no MSX. O arquivo `HGET.COM` no diretorio atual pode ser removido
+apos a importacao.
+
+Para executar sem UNAPI, por exemplo para liberar o slot de uma ROM
+configurada em `AUTOSTART_ROM`, use `MSXAIR_UNAPI=0 ./docker-run.sh` ou
+`docker run -e MSXAIR_UNAPI=0 ...`. O launcher recusa iniciar com UNAPI e
+`AUTOSTART_ROM` simultaneos para evitar conflito de slots. A execucao nativa
+continua sem UNAPI por padrao.
+
+Conexoes de entrada exigem publicacao de portas no Docker e regras adequadas
+no firewall; elas nao sao abertas automaticamente. Nao desative o firewall
+para habilitar a rede.
+
 Durante o build, o conteudo de `src/systemroms` e copiado para `/usr/share/openmsx/systemroms`, que corresponde ao file pool `share/systemroms` documentado pelo openMSX no Linux.
 
 Durante o build, uma imagem de disco rigido (HDD) com Nextor 2.1.0 e gerada automaticamente em `/root/MSX/media/msxair-hdd.dsk` (96MB, 3 particoes FAT16). Isso permite que o emulador inicie com a extensao Sunrise IDE funcional.

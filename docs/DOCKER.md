@@ -37,6 +37,10 @@ Use o script wrapper na raiz do projeto:
 ./dockerrun.sh
 ```
 
+O container ativa a extensao SM-X WiFi com TCP/IP UNAPI por padrao. Para
+desativa-la, use `MSXAIR_UNAPI=0 ./docker-run.sh`. Instrucoes para HGET, HDDs
+existentes e limitacoes de rede estao em [docker/README.md](../docker/README.md).
+
 O `dockerrun.sh` detecta automaticamente e mapeia:
 
 | Dispositivo/caminho   | Finalidade                    | Comportamento se ausente  |

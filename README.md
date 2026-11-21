@@ -47,6 +47,7 @@ Esta base cobre:
 
 - Imagem baseada em Debian Bookworm para testes isolados
 - openMSX 22.0 compilado na imagem Docker; instalacoes no host nao sao alteradas
+- TCP/IP UNAPI via SM-X WiFi emulado e BIOS do Oduvaldo Pavan, com HGET em HDDs novos (veja `docker/README.md`)
 - HDD com Nextor pre-gerado durante o build do container
 - Suporte a audio via ALSA dentro do container
 - Mapeamento condicional de dispositivos graficos e de audio (compativel com Crostini/Chromebook)

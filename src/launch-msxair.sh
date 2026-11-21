@@ -13,6 +13,30 @@ fi
 # shellcheck source=/dev/null
 source "${CONFIG_FILE}"
 
+case "${MSXAIR_UNAPI:-0}" in
+  0) ;;
+  1)
+    if [[ -n "${AUTOSTART_ROM}" ]]; then
+      echo "[ERROR] UNAPI pode ocupar o slot de AUTOSTART_ROM. Desative UNAPI com MSXAIR_UNAPI=0 para carregar a ROM." >&2
+      exit 1
+    fi
+    unapi_added=0
+    for ext in "${EXTENSIONS[@]}"; do
+      if [[ "${ext}" == "smxwifi" ]]; then
+        unapi_added=1
+        break
+      fi
+    done
+    if [[ "${unapi_added}" == 0 ]]; then
+      EXTENSIONS+=("smxwifi")
+    fi
+    ;;
+  *)
+    echo "[ERROR] MSXAIR_UNAPI deve ser 0 ou 1." >&2
+    exit 1
+    ;;
+esac
+
 # Garante que as system ROMs estão acessíveis (especialmente importante em container)
 if [[ -f "${SCRIPT_DIR}/ensure-systemroms.sh" ]]; then
   bash "${SCRIPT_DIR}/ensure-systemroms.sh" || true
