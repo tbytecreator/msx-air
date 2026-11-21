@@ -368,6 +368,15 @@ DOCKER_RUN_ARGS+=(-v "${HOME}/roms/msx":/root/roms/msx)
 # Monta o diretório de imagens HDD (para Sunrise IDE com Nextor)
 if [[ -d "${HOME}/MSX/media" ]]; then
   DOCKER_RUN_ARGS+=(-v "${HOME}/MSX/media":/root/MSX/media)
+  if ! command -v flock >/dev/null 2>&1; then
+    echo "Erro: flock nao encontrado; nao e possivel proteger o acesso ao HDD." >&2
+    exit 1
+  fi
+  exec 9>"${HOME}/MSX/media/.msxair-hdd.lock"
+  if ! flock -n -s 9; then
+    echo "Erro: HDD em uso por uma importacao. Tente novamente depois." >&2
+    exit 1
+  fi
 fi
 
 # Obtém o diretório do script para montar os system ROMs

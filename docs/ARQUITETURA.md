@@ -12,6 +12,7 @@
 │   ├── ARQUITETURA.md
 │   ├── DOCKER.md
 │   ├── IMPLEMENTACAO.md
+│   ├── MANUAL-USO.md
 │   ├── README.md
 │   └── USO-RAPIDO.md
 ├── src/
@@ -22,6 +23,7 @@
 │   ├── create-nextor-hdd.py
 │   ├── download-nextor-latest.sh
 │   ├── init-fullscreen.tcl
+│   ├── importar-hdd.sh
 │   ├── install-host-deps.sh
 │   ├── openmsx-install.sh
 │   ├── nooverview-install.sh
@@ -108,6 +110,10 @@
   - Particoes 2 e 3: vazias para uso geral
   - Nao depende do openMSX (gera imagem diretamente via Python)
   - Uso: `python3 create-nextor-hdd.py [caminho-saida] [dir-nextor-files]`
+
+- `src/importar-hdd.sh`
+  - Importa arquivos 8.3 para a primeira particao FAT16 da imagem existente
+  - Cria backup e coordena o acesso com os launchers do projeto
 
 - `src/create-hdd-image.sh` ⭐
   - **Novo**: Script shell wrapper para criacao de HDD via openMSX (diskmanipulator)

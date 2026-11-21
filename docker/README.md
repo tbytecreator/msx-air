@@ -76,4 +76,44 @@ cd /opt/msxair
 
 Os arquivos do projeto ficam em `/opt/msxair` e as midias ROM/DSK em `/root/MSX/media`.
 
+## Importar arquivos para o HDD
+
+No host, com o openMSX e os containers que usam o HDD encerrados:
+
+```bash
+# Debian/Ubuntu: instale as dependencias do importador no host.
+sudo apt-get install bash coreutils mtools python3 util-linux
+./src/importar-hdd.sh ~/Downloads/JOGO.ROM ~/Downloads/LEIA.TXT
+```
+
+O comando usa `~/MSX/media/msxair-hdd.dsk`, importa para a raiz da primeira
+particao FAT16 e preserva um backup `msxair-hdd.dsk.backup.*` no mesmo
+diretorio. Exige nomes MSX-DOS 8.3 (letras, numeros, `_` e `-` no nome;
+letras, numeros e `_` na extensao); arquivos existentes nao sao sobrescritos.
+Tambem requer `python3`, `flock` e `realpath` no host. Os arquivos no diretorio
+do host nao entram automaticamente na imagem: e necessario importá-los.
+
+Se o HDD existir somente em um container sem `--rm`, encerre o openMSX e copie
+a imagem desse container antes de removê-lo. Um container iniciado com `--rm`
+é removido ao encerrar; copiar seu HDD enquanto o openMSX está ativo pode
+produzir uma cópia inconsistente. Para inicializar um HDD novo a partir da
+imagem Docker ja construida:
+
+```bash
+mkdir -p "$HOME/MSX/media"
+if [ -e "$HOME/MSX/media/msxair-hdd.dsk" ]; then
+  echo "HDD ja existe; nao sera sobrescrito."
+else
+  container=$(docker create msxair:bookworm)
+  docker cp "$container:/root/MSX/media/msxair-hdd.dsk" "$HOME/MSX/media/msxair-hdd.dsk"
+  docker rm "$container"
+fi
+```
+
+Depois use `./docker-run.sh`; ele monta o diretorio do host. Os launchers
+atuais e o importador coordenam o acesso por bloqueio. Esse bloqueio nao
+protege contra containers antigos, comandos Docker diretos, outras instancias
+do openMSX ou ferramentas que nao o respeitem: encerre-os antes de importar
+e nao os inicie durante a importacao.
+
 > **Nota de seguranca:** `xhost +local:docker` concede acesso ao display apenas para processos locais via socket Unix. Revogue apos os testes com `xhost -local:docker`.

@@ -6,6 +6,7 @@ Esta pasta contem a documentacao do projeto MSX Air.
 
 - `IMPLEMENTACAO.md`: historico completo do que foi criado e por que.
 - `USO-RAPIDO.md`: como instalar, configurar e iniciar.
+- `MANUAL-USO.md`: manual de uso do MSX Air e importacao de arquivos.
 - `ARQUITETURA.md`: visao de estrutura dos diretorios e scripts.
 - `DOCKER.md`: como construir e testar a base em container Docker.
 - `SECURITY-SCAN.md`: resultado da varredura de segurança do projeto (senhas, credenciais, tokens).
@@ -50,6 +51,7 @@ Esta base cobre:
 - Mapeamento condicional de dispositivos graficos e de audio (compativel com Crostini/Chromebook)
 - Volume `~/MSX/media` montado para acesso ao HDD do host
 - Scripts de build e execucao automatizados
+- Importacao de arquivos para o HDD existente com `./src/importar-hdd.sh`
 
 **Deteccao inteligente:**
 

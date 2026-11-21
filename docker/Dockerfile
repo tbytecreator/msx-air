@@ -38,6 +38,7 @@ RUN apt-get update --fix-missing \
         libtcl8.6 \
         openmsx \
         python3 \
+        util-linux \
     && ldconfig
 
 # Executa ldconfig final e limpa cache de apt

@@ -8,7 +8,7 @@ O OpenMSX requer bibliotecas SDL2 que devem estar instaladas no seu sistema:
 
 ```bash
 # Instalacao automatica de dependencias
-./src/install-host-deps.sh
+sudo ./src/install-host-deps.sh
 ```
 
 Ou manualmente:

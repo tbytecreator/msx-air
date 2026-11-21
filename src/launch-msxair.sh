@@ -124,6 +124,16 @@ fi
 
 # Configura Sunrise IDE se extensao estiver ativa
 if [[ "${EXTENSIONS[*]}" =~ "ide" ]] || [[ "${EXTENSIONS[*]}" =~ "IDE" ]]; then
+  mkdir -p "${HOME}/MSX/media"
+  if ! command -v flock >/dev/null 2>&1; then
+    echo "[ERROR] flock nao encontrado; nao e possivel proteger o acesso ao HDD." >&2
+    exit 1
+  fi
+  exec 9>"${HOME}/MSX/media/.msxair-hdd.lock"
+  if ! flock -n -s 9; then
+    echo "[ERROR] HDD em uso por uma importacao. Tente novamente depois." >&2
+    exit 1
+  fi
   setup_sunrise_ide
 fi
 

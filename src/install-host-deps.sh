@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-# Script para instalar dependencias do openmsx no host Linux (Debian/Ubuntu)
+# Script para instalar dependencias do openMSX e do importador de HDD no host Linux (Debian/Ubuntu)
 
 set -euo pipefail
 
 echo "=========================================="
-echo "Instalando dependencias do OpenMSX"
+echo "Instalando dependencias do MSX Air"
 echo "=========================================="
 echo ""
 
@@ -25,12 +25,17 @@ declare -a REQUIRED_LIBS=(
   "libasound2"            # ALSA audio
   "libgl1-mesa-glx"       # OpenGL
   "libglew2.2"            # OpenGL Extension Wrangler
+  "bash"                  # Interpretador dos scripts
+  "coreutils"             # realpath, mktemp, cp, mv e rm
+  "mtools"                # mcopy e mdir
+  "python3"               # Leitura da tabela de particoes
+  "util-linux"            # flock
 )
 
 echo "[1/2] Atualizando package lists..."
 apt update -qq
 
-echo "[2/2] Instalando bibliotecas SDL2..."
+echo "[2/2] Instalando dependencias do OpenMSX e do importador de HDD..."
 apt install -y --no-install-recommends "${REQUIRED_LIBS[@]}"
 
 echo ""
@@ -40,4 +45,5 @@ echo "=========================================="
 echo ""
 echo "Voce pode agora executar:"
 echo "  ./src/launch-msxair.sh"
+echo "  ./src/importar-hdd.sh arquivo"
 echo ""
