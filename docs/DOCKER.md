@@ -13,7 +13,7 @@ Fornecer um ambiente de testes em container para a base do projeto MSX Air usand
 ## O que o Dockerfile faz
 
 1. Usa `debian:bookworm` como imagem base
-2. Instala `openmsx`, `python3`, `alsa-utils`, `libasound2` e `libasound2-plugins`
+2. Compila o openMSX 22.0 da release oficial em uma etapa separada e instala `python3`, `alsa-utils`, `libasound2` e `libasound2-plugins`
 3. Alinha o GID do grupo `audio` com o host (GID 29) para acesso correto a `/dev/snd/seq` e `/dev/snd/timer`
 4. Adiciona `root` ao grupo `audio`
 5. Copia `src/`, `docs/`, `msxair.md` e `openmsx-install.sh` para `/opt/msxair`

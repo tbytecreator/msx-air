@@ -1,3 +1,27 @@
+FROM gcc:13-bookworm AS openmsx-build
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates curl make pkg-config python3 \
+        libsdl2-dev libsdl2-ttf-dev libglew-dev libpng-dev \
+        zlib1g-dev tcl-dev libasound2-dev \
+        libogg-dev libvorbis-dev libtheora-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+RUN curl -fsSL --retry 3 \
+        https://github.com/openMSX/openMSX/releases/download/RELEASE_22_0/openmsx-22.0.tar.gz \
+        -o openmsx.tar.gz \
+    && echo 'f6d5ff89c62d32447dd5f731ff653d26a2a3c4ac6e86ea4f1bda3c4f8ad98c5d  openmsx.tar.gz' | sha256sum -c - \
+    && tar -xzf openmsx.tar.gz
+
+WORKDIR /build/openmsx-22.0
+RUN make -j2 OPENMSX_INSTALL=/usr INSTALL_SHARE_DIR=/usr/share/openmsx \
+    && make install OPENMSX_INSTALL=/usr INSTALL_SHARE_DIR=/usr/share/openmsx \
+    && mkdir -p /openmsx-libs \
+    && cp -L "$(g++ -print-file-name=libstdc++.so.6)" /openmsx-libs/ \
+    && cp -L "$(gcc -print-file-name=libgcc_s.so.1)" /openmsx-libs/
+
 FROM debian:bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -36,15 +60,19 @@ RUN apt-get update --fix-missing \
         libpng16-16 \
         libglew2.2 \
         libtcl8.6 \
-        openmsx \
         python3 \
         util-linux \
     && ldconfig
 
+COPY --from=openmsx-build /usr/bin/openmsx /usr/bin/openmsx
+COPY --from=openmsx-build /usr/share/openmsx /usr/share/openmsx
+COPY --from=openmsx-build /openmsx-libs/ /usr/local/lib/
+
 # Executa ldconfig final e limpa cache de apt
 RUN ldconfig \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && openmsx -v | grep -Fx 'openMSX 22.0'
 
 # Garante que o grupo audio dentro do container usa o mesmo GID do host (29),
 # permitindo acesso aos devices /dev/snd/seq e /dev/snd/timer.

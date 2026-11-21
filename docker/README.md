@@ -4,6 +4,10 @@
 
 A imagem usa Debian Bookworm (`debian:bookworm`) como solicitado.
 
+O openMSX 22.0 e compilado a partir da release oficial, cuja integridade e
+verificada por SHA-256. A compilacao ocorre em uma etapa separada da imagem
+final. A instalacao nativa ou via Flatpak no host nao e alterada.
+
 Durante o build, o conteudo de `src/systemroms` e copiado para `/usr/share/openmsx/systemroms`, que corresponde ao file pool `share/systemroms` documentado pelo openMSX no Linux.
 
 Durante o build, uma imagem de disco rigido (HDD) com Nextor 2.1.0 e gerada automaticamente em `/root/MSX/media/msxair-hdd.dsk` (96MB, 3 particoes FAT16). Isso permite que o emulador inicie com a extensao Sunrise IDE funcional.
@@ -15,6 +19,10 @@ Na raiz do projeto:
 ```bash
 sudo docker build -f docker/Dockerfile -t msxair:bookworm .
 ```
+
+Para verificar a versao e a inicializacao da maquina com Nextor sem abrir uma
+janela, execute `bash tests/test-docker-openmsx.sh`. O teste usa um container
+temporario e nao modifica o HDD do host.
 
 ## Execucao para testes
 
