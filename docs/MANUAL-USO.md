@@ -54,6 +54,11 @@ Na instalação nativa, ajuste `src/msxair.conf` conforme necessário:
   ou um disquete ao iniciar.
 - `WIFI_PRE_START_CMD`: comando opcional executado antes do emulador.
 
+O launcher nativo ativa TCP/IP UNAPI por padrao e requer openMSX 22 ou superior.
+Para liberar o slot para `AUTOSTART_ROM`, inicie com
+`MSXAIR_UNAPI=0 ./src/launch-msxair.sh`. Consulte o
+[guia de rede](../docker/README.md#internet-no-msx-tcpip-unapi).
+
 Inicie a instalação nativa:
 
 ```bash

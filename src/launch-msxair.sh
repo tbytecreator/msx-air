@@ -13,7 +13,7 @@ fi
 # shellcheck source=/dev/null
 source "${CONFIG_FILE}"
 
-case "${MSXAIR_UNAPI:-0}" in
+case "${MSXAIR_UNAPI:-1}" in
   0) ;;
   1)
     if [[ -n "${AUTOSTART_ROM}" ]]; then
@@ -36,6 +36,26 @@ case "${MSXAIR_UNAPI:-0}" in
     exit 1
     ;;
 esac
+
+if [[ "${MSXAIR_UNAPI:-1}" == 1 && ! -f /.dockerenv && ! -f /run/.containerenv ]]; then
+  unapi_rom="${SCRIPT_DIR}/systemroms/extensions/ESPUNAPI_IO.rom"
+  unapi_rom_dest="${HOME}/.openMSX/share/systemroms/ESPUNAPI_IO.rom"
+  unapi_sha256="233ef8d636ae8e34038fc281972cd15b194c6affdca453d82339c2e125b73332"
+  if [[ ! -f "${unapi_rom}" ]] || ! echo "${unapi_sha256}  ${unapi_rom}" | sha256sum -c --status; then
+    echo "[ERROR] BIOS UNAPI ausente ou invalida: ${unapi_rom}" >&2
+    exit 1
+  fi
+  mkdir -p "$(dirname "${unapi_rom_dest}")"
+  if [[ -L "${unapi_rom_dest}" ]]; then
+    echo "[ERROR] BIOS UNAPI de destino e um link simbolico: ${unapi_rom_dest}" >&2
+    exit 1
+  fi
+  cp -n -- "${unapi_rom}" "${unapi_rom_dest}"
+  if ! echo "${unapi_sha256}  ${unapi_rom_dest}" | sha256sum -c --status; then
+    echo "[ERROR] BIOS UNAPI existente difere da versao esperada: ${unapi_rom_dest}" >&2
+    exit 1
+  fi
+fi
 
 # Garante que as system ROMs estão acessíveis (especialmente importante em container)
 if [[ -f "${SCRIPT_DIR}/ensure-systemroms.sh" ]]; then

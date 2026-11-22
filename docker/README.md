@@ -17,8 +17,54 @@ sockets da rede do container; nao e necessario um ESP fisico, TAP, rede
 permite conexoes de saida atraves do host. TLS usa `libssl3` e os certificados
 do container. A emulacao nao oferece SSH UNAPI.
 
-A BIOS e o HGET 1.3 sao baixados do repositorio de Oduvaldo em revisoes fixas
-com SHA-256 verificado. Em HDDs novos, o cliente fica em `A:\UNAPI\HGET.COM`:
+A BIOS foi obtida do repositorio de Oduvaldo em revisao fixa e tem SHA-256
+verificado. Os programas em `src/hdd-software` sao incluidos nos HDDs novos:
+
+- `A:\UNAPI`: HGET, HUB, HUBG, INSTAGR8, SNTP, TFTP, WAITWIFI, TELNET,
+  TELNETF, TELNET.ROM, SSH, CHKSSH e TCPIP. A documentacao original fica em
+  `DOCS`.
+- `A:\FILEHUNT`: File-Hunter Browser 1.0.2, de Natalia PC, com sua licenca e
+  documentacao. Requer MSX2 ou superior, Nextor/MSX-DOS 2 e TCP/IP UNAPI.
+
+Os utilitarios UNAPI foram obtidos da revisao
+[`7f5bdcd1`](https://github.com/ducasp/MSX-Development/tree/7f5bdcd1f55772d14243e613cb490a66097de9b3/UNAPI);
+o navegador vem da [release 1.0.2](https://github.com/nataliapc/msx_filehunterbrowser/releases/tag/v1.0.2)
+(SHA-256 do ZIP: `158b7bb6e6da6b62aa8704b96d384f22f755f4251652eba36a4da87e33e0508f`).
+Consulte as licencas e instrucoes originais distribuidas com os programas.
+A versao 1.0.4 nao recuperou a lista no openMSX; ha um
+[relato semelhante](https://github.com/nataliapc/msx_filehunterbrowser/issues/5)
+em outro ambiente.
+
+`TCPIP.COM` e o utilitario de controle TCP/IP UNAPI de Konamiman, obtido de
+[sua pagina oficial](https://www.konamiman.com/msx/networking/tcpip.com)
+(SHA-256 `8429b8a18c0f56ee818afb954ad30adf43caf3f56ca58e90b4dedcbdb17dad63`).
+Use `TCPIP S` para consultar o estado e os enderecos informados ao MSX e
+`TCPIP F` para listar capacidades.
+
+### Inicializacao e configuracao de rede
+
+A BIOS UNAPI em ROM registra-se automaticamente antes do Nextor iniciar; nao
+existe um driver adicional a carregar no `AUTOEXEC.BAT`. Em HDDs novos, o
+AUTOEXEC inclui `A:\UNAPI` e `A:\FILEHUNT` no PATH e executa `WAITWIFI /T`
+quando disponivel. Se a extensao estiver desativada, o WAITWIFI informa que
+nao encontrou UNAPI e o boot continua.
+
+O ESP32 emulado nao controla uma placa Wi-Fi real: configure a conexao e o
+DNS no host e na rede Docker. A busca de pontos de acesso no emulador nao
+lista redes reais; alterar SSID ou senha no MSX nao conecta o host. As
+alteracoes de endereco no TCPIP nao configuram a rede do host ou do Docker.
+Para um ESP32 fisico, consulte a documentacao do
+[openMSX](https://github.com/openMSX/openMSX/blob/RELEASE_22_0/doc/smxwifi.md).
+
+Para iniciar o navegador e manter seus arquivos de trabalho nesse diretorio:
+
+```text
+A:
+CD \FILEHUNT
+FH
+```
+
+Para usar HGET:
 
 ```text
 A:\UNAPI\HGET https://example.com/ /l:EXAMPLE.HTM
@@ -27,9 +73,15 @@ A:\UNAPI\HGET https://example.com/ /l:EXAMPLE.HTM
 O HGET 1.3 pode ficar repetindo a barra de progresso em respostas muito pequenas
 (por exemplo, 16 bytes); use outro cliente UNAPI para esses arquivos.
 
-Um HDD existente nao e alterado pela atualizacao e nao recebe o HGET
-automaticamente. Para importa-lo na raiz do HDD do host, encerre o emulador
-e use o importador existente:
+SSH e CHKSSH precisam de uma implementacao SSH UNAPI, nao fornecida pela
+emulacao SM-X WiFi do openMSX. TELNETF requer hardware BadCat; TELNET.ROM
+requer um carregador de ROM e pode disputar slots com as outras extensoes.
+Clientes que dependem de servidores externos podem deixar de funcionar se
+esses servicos mudarem ou forem desativados.
+
+Um HDD existente nao e alterado automaticamente pela atualizacao. Para
+importar somente o HGET na raiz do HDD do host, encerre o emulador e use o
+importador existente:
 
 ```bash
 ( set -o noclobber; docker run --rm msxair:bookworm cat /opt/msxair/src/hdd-software/UNAPI/HGET.COM > HGET.COM ) \
@@ -44,8 +96,10 @@ apos a importacao.
 Para executar sem UNAPI, por exemplo para liberar o slot de uma ROM
 configurada em `AUTOSTART_ROM`, use `MSXAIR_UNAPI=0 ./docker-run.sh` ou
 `docker run -e MSXAIR_UNAPI=0 ...`. O launcher recusa iniciar com UNAPI e
-`AUTOSTART_ROM` simultaneos para evitar conflito de slots. A execucao nativa
-continua sem UNAPI por padrao.
+`AUTOSTART_ROM` simultaneos para evitar conflito de slots. O launcher nativo
+tambem ativa UNAPI por padrao e requer openMSX 22 ou superior; a BIOS e
+instalada no diretorio de ROMs do usuario. Para desativa-lo na execucao
+nativa, use `MSXAIR_UNAPI=0 ./src/launch-msxair.sh`.
 
 Conexoes de entrada exigem publicacao de portas no Docker e regras adequadas
 no firewall; elas nao sao abertas automaticamente. Nao desative o firewall

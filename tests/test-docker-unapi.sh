@@ -24,7 +24,7 @@ fi
 grep -F 'UNAPI pode ocupar o slot de AUTOSTART_ROM' <<< "$output"
 
 test_dir=$(mktemp -d)
-trap 'rm -f -- "$test_dir/expected.txt" "$test_dir/result.txt" "$test_dir/hdd.dsk"; rmdir -- "$test_dir"' EXIT
+trap 'rm -f -- "$test_dir/expected.txt" "$test_dir/result.txt" "$test_dir/status.txt" "$test_dir/hdd.dsk" "$test_dir/installed"; rmdir -- "$test_dir"' EXIT
 python3 - "$test_dir/expected.txt" <<'PY'
 from pathlib import Path
 import sys
@@ -49,8 +49,9 @@ cat >> /opt/msxair/src/init-fullscreen.tcl <<'TCL'
 set throttle off
 after time 20 {
     set throttle on
-    type_via_keybuf "A:\\UNAPI\\HGET http://localhost:18888/expected.txt /l:A:\\RESULT.TXT\r"
+    type_via_keybuf "HGET http://localhost:18888/expected.txt /l:A:\\RESULT.TXT\r"
 }
+after time 40 { type_via_keybuf "TCPIP S > A:\\STATUS.TXT\r" }
 after time 50 { exit }
 TCL
 
@@ -69,4 +70,19 @@ PY
 )
 mcopy -i "$test_dir/hdd.dsk@@$offset" ::/RESULT.TXT "$test_dir/result.txt"
 cmp "$test_dir/expected.txt" "$test_dir/result.txt"
+mcopy -i "$test_dir/hdd.dsk@@$offset" ::/STATUS.TXT "$test_dir/status.txt"
+grep -F 'Network state: OPEN' "$test_dir/status.txt"
+for file in CHKSSH.COM HGET.COM HUB.COM HUBG.COM INSTAGR8.COM SNTP.COM \
+  SSH.COM TCPIP.COM TELNET.COM TELNETF.COM TELNET.ROM TFTP.COM WAITWIFI.COM; do
+  [[ -f "$repo_dir/src/hdd-software/UNAPI/$file" ]]
+done
+[[ -f "$repo_dir/src/hdd-software/FILEHUNT/FH.COM" ]]
+for dir in UNAPI UNAPI/DOCS FILEHUNT; do
+  for source in "$repo_dir/src/hdd-software/$dir/"*; do
+    [[ -f "$source" ]] || continue
+    mcopy -o -i "$test_dir/hdd.dsk@@$offset" "::/$dir/${source##*/}" "$test_dir/installed"
+    cmp "$source" "$test_dir/installed"
+  done
+done
 echo "Download HTTP via UNAPI concluido e verificado."
+echo "Programas e documentacao UNAPI e File-Hunter verificados no HDD."

@@ -47,7 +47,8 @@ AUTOEXEC = (
     b"ECHO.\r\n"
     b"ECHO  MSX Air - Nextor 2.1.4\r\n"
     b"ECHO.\r\n"
-    b"SET PATH=A:\\TOOLS;A:\\TED;A:\\SOFARUN\r\n"
+    b"SET PATH=A:\\TOOLS;A:\\TED;A:\\SOFARUN;A:\\UNAPI;A:\\FILEHUNT\r\n"
+    b"IF EXIST A:\\UNAPI\\WAITWIFI.COM A:\\UNAPI\\WAITWIFI.COM /T\r\n"
     b"A:\\TOOLS\\NSYSVER\r\n"
     b"ECHO.\r\n"
 )
