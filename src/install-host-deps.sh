@@ -27,7 +27,11 @@ declare -a REQUIRED_LIBS=(
   "libasound2|libasound2t64" # ALSA audio
   "libgl1-mesa-glx|libgl1"   # OpenGL
   "libegl1"               # EGL
-  "libglew2.2"            # OpenGL Extension Wrangler
+  "libglew2.2|libglew2.1" # OpenGL Extension Wrangler
+  "libx11-6"              # X11 core library
+  "libxcb1"               # X protocol C binding
+  "libxml2"               # XML parser
+  "zlib1g"                # Compression library
   "bash"                  # Interpretador dos scripts
   "coreutils"             # realpath, mktemp, cp, mv e rm
   "mtools"                # mcopy e mdir
@@ -37,10 +41,9 @@ declare -a REQUIRED_LIBS=(
 
 package_available() {
   local package="$1"
-  local candidate
 
-  candidate=$(apt-cache policy "$package" 2>/dev/null | awk '/Candidate:/ {print $2; exit}')
-  [[ -n "$candidate" && "$candidate" != "(none)" ]]
+  apt-cache show "$package" 2>/dev/null |
+    grep -q "^Package: ${package}$"
 }
 
 echo "[1/2] Atualizando package lists..."

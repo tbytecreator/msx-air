@@ -48,7 +48,7 @@ if [ "$missing_count" -gt 0 ]; then
   echo "  ./src/install-host-deps.sh"
   echo ""
   echo "Ou manualmente no Debian 13 ou derivados:"
-  echo "  sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0 libsdl2-image-2.0-0 libasound2t64 libgl1 libglew2.2"
+  echo "  sudo apt-get install -y libsdl2-2.0-0 libsdl2-ttf-2.0-0 libsdl2-image-2.0-0 libasound2t64 libgl1 libegl1 libglew2.2 libx11-6 libxcb1 libxml2 zlib1g"
   echo ""
   exit 1
 else
