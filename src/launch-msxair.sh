@@ -224,13 +224,13 @@ if [[ "${OPENMSX_CMD}" == *"flatpak"* ]]; then
     TCL_SCRIPT="${FLATPAK_DATA_DIR}/init-fullscreen.tcl"
     echo "[INFO] Script TCL copiado para sandbox Flatpak: ${TCL_SCRIPT}"
   else
-    echo "[WARN] Script TCL nao encontrado: ${TCL_SCRIPT}. Iniciando sem fullscreen automatico."
-    TCL_SCRIPT=""
+    echo "[ERROR] Script TCL nao encontrado: ${TCL_SCRIPT}." >&2
+    exit 1
   fi
 else
   if [[ ! -f "${TCL_SCRIPT}" ]]; then
-    echo "[WARN] Script TCL nao encontrado: ${TCL_SCRIPT}. Iniciando sem fullscreen automatico."
-    TCL_SCRIPT=""
+    echo "[ERROR] Script TCL nao encontrado: ${TCL_SCRIPT}." >&2
+    exit 1
   fi
 fi
 

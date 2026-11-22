@@ -37,6 +37,7 @@ Esta base cobre:
 
 - Inicializacao do emulador em maquina Turbo-R (Panasonic FS-A1GT)
 - Inicializacao automatica em **tela cheia**
+- Inicializacao sem janelas e indicadores persistentes do openMSX: o launcher atualiza o estado de visibilidade em `imgui.ini`. Eles podem ser reabertos pelo menu durante o uso; avisos e erros continuam aparecendo
 - Carregamento de extensoes (SD mapper, FM, SCC, V9990)
 - Disco rigido IDE montado automaticamente via `-hda`
 - Diretorio configuravel para ROM/DSK
