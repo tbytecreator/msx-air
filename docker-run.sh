@@ -111,7 +111,7 @@ validate_and_install_dependencies() {
   # Lista de dependências de bibliotecas com alternativas
   # Formato: "pacote_principal|alternativa1|alternativa2:Descrição"
   local required_libs=(
-    "libgl1-mesa-glx|libgl1:OpenGL Libraries"
+    "libgl1:OpenGL Libraries"
     "libva2|libva1:Video Acceleration Library"
     "libasound2|libasound2t64:ALSA Audio Libraries"
     "libxext6:X11 Extensions"
@@ -153,8 +153,9 @@ validate_and_install_dependencies() {
     local packages="$1"
     local IFS='|'
     for pkg in $packages; do
-      # Tenta apt-cache policy que é mais confiável
-      if apt-cache policy "$pkg" 2>/dev/null | grep -q "Candidate:"; then
+      # Confirma que o pacote existe no repositório, não apenas que uma
+      # entrada com candidato "(none)" apareceu no apt-cache.
+      if apt-cache show "$pkg" 2>/dev/null | grep -q "^Package: $pkg$"; then
         echo "$pkg"
         return 0
       fi

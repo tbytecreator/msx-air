@@ -25,7 +25,7 @@ declare -a REQUIRED_LIBS=(
   "libsdl2-image-2.0-0"   # Image loading support
   "libsdl2-gfx-1.0-0"     # Graphics support
   "libasound2|libasound2t64" # ALSA audio
-  "libgl1-mesa-glx|libgl1"   # OpenGL
+  "libgl1"                # OpenGL
   "libegl1"               # EGL
   "libglew2.2|libglew2.1" # OpenGL Extension Wrangler
   "libx11-6"              # X11 core library
