@@ -75,13 +75,15 @@ sudo apt-get install -y \
   libsdl2-ttf-2.0-0 \
   libsdl2-image-2.0-0 \
   libsdl2-gfx-1.0-0 \
-  libasound2 \
+  libasound2t64 \
   libx11-6 \
   libgl1 \
   libglew2.2 \
   libxml2 \
   zlib1g
 ```
+
+No Debian 12 ou Ubuntu, use `libasound2` em vez de `libasound2t64`.
 
 #### 4.2 Instalar OpenMSX
 
